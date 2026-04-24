@@ -1,5 +1,5 @@
 const multer = require("multer");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const CloudinaryStorage = require("multer-storage-cloudinary");
 const cloudinary = require("../config/cloudinary");
 
 /* =========================================================
@@ -16,7 +16,7 @@ const ALLOWED_MIME_TYPES = [...IMAGE_MIME_TYPES, ...PDF_MIME_TYPES];
    CLOUDINARY STORAGE CONFIG
    ========================================================= */
 
-const storage = new CloudinaryStorage({
+const storage = CloudinaryStorage({
   cloudinary,
   params: (req, file) => {
     const isPdf = PDF_MIME_TYPES.includes(file.mimetype);

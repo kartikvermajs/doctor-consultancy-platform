@@ -286,6 +286,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "../landing/Header";
+import FloatingChatWidget from "../shared/FloatingChatWidget";
 import { userAuthStore } from "@/store/authStore";
 import { Appointment, useAppointmentStore } from "@/store/appointmentStore";
 import { Card, CardContent } from "../ui/card";
@@ -552,6 +553,7 @@ const PatientDashboardContent = () => {
           </Tabs>
         </div>
       </div>
+      <FloatingChatWidget />
     </>
   );
 };
