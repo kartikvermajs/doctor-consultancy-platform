@@ -108,7 +108,7 @@ const page = () => {
         }
       });
 
-      setAvailableSlots(slots);
+      setAvailableSlots(Array.from(new Set(slots)));
     }
   }, [selectedDate, currentDoctor]);
 

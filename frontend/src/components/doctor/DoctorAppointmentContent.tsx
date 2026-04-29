@@ -21,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { emptyStates, getStatusColor } from "@/lib/constant";
 import PrescriptionViewModal from "./PrescriptionViewModal";
+import FloatingChatWidget from "../shared/FloatingChatWidget";
 
 const DoctorAppointmentContent = () => {
   const { user } = userAuthStore();
@@ -28,37 +29,32 @@ const DoctorAppointmentContent = () => {
     useAppointmentStore();
 
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
-  const [tabCounts, setTabCounts] = useState({ upcoming: 0, past: 0 });
-
   /* ---------------- fetch appointments ---------------- */
   useEffect(() => {
     if (user?.type === "doctor") {
-      fetchAppointments("doctor", activeTab);
+      fetchAppointments("doctor");
     }
-  }, [user, activeTab, fetchAppointments]);
+  }, [user, fetchAppointments]);
 
-  /* ---------------- tab counts ---------------- */
-  useEffect(() => {
+  /* ---------------- derived appointment lists ---------------- */
+  const upcomingAppointments = React.useMemo(() => {
     const now = new Date();
-
-    const upcoming = appointments.filter((apt) => {
+    return appointments.filter((apt) => {
       const start = new Date(apt.slotStartIso);
       return (
         (start >= now || apt.status === "In Progress") &&
         ["Scheduled", "In Progress"].includes(apt.status)
       );
     });
+  }, [appointments]);
 
-    const past = appointments.filter((apt) => {
+  const pastAppointments = React.useMemo(() => {
+    const now = new Date();
+    return appointments.filter((apt) => {
       const start = new Date(apt.slotStartIso);
       return (
         start < now || apt.status === "Completed" || apt.status === "Cancelled"
       );
-    });
-
-    setTabCounts({
-      upcoming: upcoming.length,
-      past: past.length,
     });
   }, [appointments]);
 
@@ -76,16 +72,8 @@ const DoctorAppointmentContent = () => {
   const isToday = (date: string) =>
     new Date(date).toDateString() === new Date().toDateString();
 
-  const canJoinCall = (appointment: Appointment) => {
-    const start = new Date(appointment.slotStartIso);
-    const diff = (start.getTime() - Date.now()) / (1000 * 60);
-
-    return (
-      isToday(appointment.slotStartIso) &&
-      diff <= 15 &&
-      diff >= -120 &&
-      ["Scheduled", "In Progress"].includes(appointment.status)
-    );
+  const canJoinCall = (appointment: any) => {
+    return (appointment.status === "Scheduled" || appointment.status === "In Progress");
   };
 
   const canMarkCancelled = (appointment: Appointment) =>
@@ -252,14 +240,14 @@ const DoctorAppointmentContent = () => {
           >
             <TabsList className="grid grid-cols-2">
               <TabsTrigger value="upcoming">
-                Upcoming ({tabCounts.upcoming})
+                Upcoming ({upcomingAppointments.length})
               </TabsTrigger>
-              <TabsTrigger value="past">Past ({tabCounts.past})</TabsTrigger>
+              <TabsTrigger value="past">Past ({pastAppointments.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="upcoming" className="space-y-4">
-              {loading ? null : appointments.length ? (
-                appointments.map((apt) => (
+              {loading ? null : upcomingAppointments.length ? (
+                upcomingAppointments.map((apt) => (
                   <AppointmentCard key={apt._id} appointment={apt} />
                 ))
               ) : (
@@ -268,8 +256,8 @@ const DoctorAppointmentContent = () => {
             </TabsContent>
 
             <TabsContent value="past" className="space-y-4">
-              {loading ? null : appointments.length ? (
-                appointments.map((apt) => (
+              {loading ? null : pastAppointments.length ? (
+                pastAppointments.map((apt) => (
                   <AppointmentCard key={apt._id} appointment={apt} />
                 ))
               ) : (
@@ -279,6 +267,7 @@ const DoctorAppointmentContent = () => {
           </Tabs>
         </div>
       </div>
+      <FloatingChatWidget />
     </>
   );
 };

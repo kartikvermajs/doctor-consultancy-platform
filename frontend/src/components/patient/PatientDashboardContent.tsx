@@ -318,9 +318,9 @@ const PatientDashboardContent = () => {
   /* ---------------- fetch appointments ---------------- */
   useEffect(() => {
     if (user?.type === "patient") {
-      fetchAppointments("patient", activeTab);
+      fetchAppointments("patient");
     }
-  }, [user, activeTab, fetchAppointments]);
+  }, [user, fetchAppointments]);
 
   /* ---------------- derived appointment lists (FIX) ---------------- */
   const upcomingAppointments = useMemo(() => {
@@ -359,15 +359,7 @@ const PatientDashboardContent = () => {
     new Date(date).toDateString() === new Date().toDateString();
 
   const canJoinCall = (appointment: Appointment) => {
-    const start = new Date(appointment.slotStartIso);
-    const diff = (start.getTime() - Date.now()) / (1000 * 60);
-
-    return (
-      isToday(appointment.slotStartIso) &&
-      diff <= 15 &&
-      diff >= -120 &&
-      ["Scheduled", "In Progress"].includes(appointment.status)
-    );
+    return ["Scheduled", "In Progress"].includes(appointment.status);
   };
 
   if (!user) return null;

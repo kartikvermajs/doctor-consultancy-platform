@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import FloatingChatWidget from "../shared/FloatingChatWidget";
 import { Textarea } from "../ui/textarea";
 import { Badge } from "../ui/badge";
 import { Checkbox } from "../ui/checkbox";
@@ -464,7 +465,7 @@ const ProfilePage = ({ userType }: ProfileProps) => {
         <Input
           value={formData.hospitalInfo?.name || ""}
           onChange={(e) =>
-            handleInputChnage("hospitalInfo?.name", e.target.value)
+            handleInputChnage("hospitalInfo.name", e.target.value)
           }
           disabled={!isEditing}
         />
@@ -475,7 +476,7 @@ const ProfilePage = ({ userType }: ProfileProps) => {
         <Textarea
           value={formData.hospitalInfo?.address || ""}
           onChange={(e) =>
-            handleInputChnage("hospitalInfo?.address", e.target.value)
+            handleInputChnage("hospitalInfo.address", e.target.value)
           }
           disabled={!isEditing}
           rows={3}
@@ -487,7 +488,7 @@ const ProfilePage = ({ userType }: ProfileProps) => {
         <Input
           value={formData.hospitalInfo?.city || ""}
           onChange={(e) =>
-            handleInputChnage("hospitalInfo?.city", e.target.value)
+            handleInputChnage("hospitalInfo.city", e.target.value)
           }
           disabled={!isEditing}
         />
@@ -504,7 +505,7 @@ const ProfilePage = ({ userType }: ProfileProps) => {
             type="date"
             value={formatDateForInput(formData.availabilityRange?.startDate)}
             onChange={(e) =>
-              handleInputChnage("availabilityRange?.startDate", e.target.value)
+              handleInputChnage("availabilityRange.startDate", e.target.value)
             }
             disabled={!isEditing}
           />
@@ -516,7 +517,7 @@ const ProfilePage = ({ userType }: ProfileProps) => {
             type="date"
             value={formatDateForInput(formData.availabilityRange?.endDate)}
             onChange={(e) =>
-              handleInputChnage("availabilityRange?.endDate", e.target.value)
+              handleInputChnage("availabilityRange.endDate", e.target.value)
             }
             disabled={!isEditing}
           />
@@ -701,7 +702,7 @@ const ProfilePage = ({ userType }: ProfileProps) => {
         <Input
           value={formData.emergencyContact?.name || ""}
           onChange={(e) =>
-            handleInputChnage("emergencyContact?.name", e.target.value)
+            handleInputChnage("emergencyContact.name", e.target.value)
           }
           disabled={!isEditing}
         />
@@ -712,7 +713,7 @@ const ProfilePage = ({ userType }: ProfileProps) => {
         <Input
           value={formData.emergencyContact?.phone || ""}
           onChange={(e) =>
-            handleInputChnage("emergencyContact?.phone", e.target.value)
+            handleInputChnage("emergencyContact.phone", e.target.value)
           }
           disabled={!isEditing}
         />
@@ -723,7 +724,7 @@ const ProfilePage = ({ userType }: ProfileProps) => {
         <Input
           value={formData.emergencyContact?.relationship || ""}
           onChange={(e) =>
-            handleInputChnage("emergencyContact?.relationship", e.target.value)
+            handleInputChnage("emergencyContact.relationship", e.target.value)
           }
           disabled={!isEditing}
         />
@@ -827,6 +828,7 @@ const ProfilePage = ({ userType }: ProfileProps) => {
           </div>
         </div>
       </div>
+      <FloatingChatWidget />
     </>
   );
 };

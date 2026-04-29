@@ -30,6 +30,16 @@ router.get(
         filter.status = { $in: statusArray };
       }
 
+      // Auto-complete stale appointments (1 hour after slot end)
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      await Appointment.updateMany({
+        doctorId: req.auth.id,
+        status: "In Progress",
+        slotEndIso: { $lt: oneHourAgo }
+      }, {
+        $set: { status: "Completed" }
+      });
+
       const appointment = await Appointment.find(filter)
         .populate("patientId", "name email phone dob age profileImage")
         .populate(
@@ -69,6 +79,17 @@ router.get(
         const statusArray = Array.isArray(status) ? status : [status];
         filter.status = { $in: statusArray };
       }
+
+      // Auto-complete stale appointments (1 hour after slot end)
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      await Appointment.updateMany({
+        patientId: req.auth.id,
+        status: "In Progress",
+        slotEndIso: { $lt: oneHourAgo }
+      }, {
+        $set: { status: "Completed" }
+      });
+
       const appointment = await Appointment.find(filter)
         .populate(
           "doctorId",

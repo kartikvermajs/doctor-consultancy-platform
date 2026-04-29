@@ -611,19 +611,31 @@ const PayementStep = ({
       </AnimatePresence>
 
       {paymentStatus === "idle" && (
-        <div className="flex justify-between">
-          <Button variant="outline" onClick={onBack}>
-            Back
-          </Button>
+        <div className="space-y-6">
+          <div className="bg-blue-50 text-blue-800 p-4 rounded-lg text-sm border border-blue-200">
+            <p className="font-semibold mb-2">Test Mode Credentials:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong>Fastest Method:</strong> Select <strong>Netbanking</strong> (choose any bank like SBI/HDFC) in the popup. It works instantly with 1 click! (Note: UPI only shows QR codes on desktop now).</li>
+              <li><strong>If using Card:</strong> Use Domestic Visa: <strong>4100 2800 0000 1007</strong> or RuPay: <strong>6527 6589 0000 1005</strong></li>
+              <li><span className="font-semibold text-red-600">CRITICAL:</span> You MUST uncheck the <strong>"Save card securely"</strong> option before paying, otherwise Razorpay will fail with a tokenization error.</li>
+              <li><strong>Success Steps:</strong> Expiry: Any future date | CVV: Any 3 digits | <strong>OTP: Enter 1234 and click Submit/Success!</strong></li>
+            </ul>
+          </div>
 
-          <Button
-            onClick={handlePayment}
-            disabled={loading || isPaymentLoading}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <CreditCard className="w-4 h-4 mr-2" />
-            Pay ₹{totalAmount}
-          </Button>
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={onBack}>
+              Back
+            </Button>
+
+            <Button
+              onClick={handlePayment}
+              disabled={loading || isPaymentLoading}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              Pay ₹{totalAmount}
+            </Button>
+          </div>
         </div>
       )}
 

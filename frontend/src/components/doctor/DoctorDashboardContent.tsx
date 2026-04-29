@@ -26,6 +26,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { getStatusColor } from "@/lib/constant";
+import FloatingChatWidget from "../shared/FloatingChatWidget";
 
 const DoctorDashboardContent = () => {
   const searchParams = useSearchParams();
@@ -84,7 +85,20 @@ const DoctorDashboardContent = () => {
     }
   };
 
-  const handleCloseModal = () => {
+  const handleCloseModal = async () => {
+    if (completingAppointmentId) {
+      setModalLoading(true);
+      try {
+        await endConsultation(completingAppointmentId, "", "");
+        if (user?.type) {
+          fetchDashboard(user.type);
+        }
+      } catch (error) {
+        console.error("failed to complete consultation automatically", error);
+      } finally {
+        setModalLoading(false);
+      }
+    }
     setShowPrescriptionModal(false);
     setCompletingAppointmentId(null);
     const url = new URL(window.location.href);
@@ -101,17 +115,7 @@ const DoctorDashboardContent = () => {
   };
 
   const canJoinCall = (appointment: any) => {
-    const appointmentTime = new Date(appointment.slotStartIso);
-    const now = new Date();
-    const diffMintues =
-      (appointmentTime.getTime() - now.getTime()) / (1000 * 60);
-
-    return (
-      diffMintues <= 15 && //not earliar than 15 min before start
-      diffMintues >= -120 && //not later than 2 hours after start
-      (appointment.status === "Scheduled" ||
-        appointment.status === "In Progress")
-    );
+    return (appointment.status === "Scheduled" || appointment.status === "In Progress");
   };
 
   if (loading || !dashboardData) {
@@ -474,6 +478,7 @@ const DoctorDashboardContent = () => {
         onSave={handleSavePrescription}
         patientName={patientName}
       />
+      <FloatingChatWidget />
     </>
   );
 };

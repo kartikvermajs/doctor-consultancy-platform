@@ -6,25 +6,10 @@ import { MessageCircle, X, Send } from "lucide-react";
 
 const FloatingChatWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [showPulse, setShowPulse] = useState(false);
     const [message, setMessage] = useState("");
-
-    useEffect(() => {
-        // Show a subtle pulse after 3 seconds of page load to attract attention
-        const timer = setTimeout(() => {
-            if (!isOpen) {
-                setShowPulse(true);
-            }
-        }, 3000);
-
-        return () => clearTimeout(timer);
-    }, [isOpen]);
 
     const toggleChat = () => {
         setIsOpen(!isOpen);
-        if (!isOpen) {
-            setShowPulse(false); // Stop pulsing once opened
-        }
     };
 
     return (
@@ -130,31 +115,6 @@ const FloatingChatWidget = () => {
                     )}
                 </AnimatePresence>
 
-                {/* Notification Ripple */}
-                {!isOpen && showPulse && (
-                    <>
-                        <motion.div
-                            animate={{ scale: [1, 2.2], opacity: [0.5, 0] }}
-                            transition={{
-                                duration: 2.5,
-                                repeat: Infinity,
-                                ease: "easeOut",
-                            }}
-                            className="absolute inset-0 rounded-full bg-primary z-[-1]"
-                        />
-                        <motion.div
-                            animate={{ scale: [1, 2.2], opacity: [0.5, 0] }}
-                            transition={{
-                                duration: 2.5,
-                                repeat: Infinity,
-                                ease: "easeOut",
-                                delay: 1.25,
-                            }}
-                            className="absolute inset-0 rounded-full bg-primary z-[-1]"
-                        />
-                        <div className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
-                    </>
-                )}
             </motion.button>
         </div>
     );
