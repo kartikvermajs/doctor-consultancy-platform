@@ -14,15 +14,15 @@ const mongoose = require('mongoose')
 
 
 const dailyTimeRangeSchema = new mongoose.Schema({
-    start: {type:String}, //09:00
-    end: {type:String},   //12:00
+    start: {type:String}, 
+    end: {type:String},   
 }, {_id:false})
 
 
 const availabilityRangeSchema = new mongoose.Schema({
     startDate: {type:String},
     endDate: {type:String},
-    excludedWeekdays: {type: [Number], default: []}, //0-6 (Sun-Sat)
+    excludedWeekdays: {type: [Number], default: []}, 
 }, {_id:false})
 
 const doctorSchema = new mongoose.Schema({

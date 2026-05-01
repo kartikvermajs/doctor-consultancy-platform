@@ -20,45 +20,29 @@ import { Button } from "../ui/button";
 import { postFormWithAuth, deleteWithAuth, postWithAuth } from "@/service/httpService";
 import { useUploadThing } from "@/lib/uploadthing";
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   HELPERS
-───────────────────────────────────────────────────────────────────────────── */
-
-/** Detect PDF either from stored mimetype or from Cloudinary raw-upload URL */
 const isPdf = (mimetype?: string, url?: string): boolean => {
   if (mimetype) return mimetype === "application/pdf";
-  // Cloudinary raw uploads contain "/raw/upload/" in the URL
+  
   return url?.includes("/raw/upload/") ?? false;
 };
 
-/** Build a forced-download URL.
- *  For Cloudinary: append `fl_attachment` transformation flag.
- *  For UploadThing (ufs.sh / uploadthing.com): return as-is — they serve with
- *  proper Content-Disposition headers natively.
- *  For generic URLs: return as-is.
- */
 const buildDownloadUrl = (url: string): string => {
   if (url.includes("cloudinary.com")) {
     return url.replace("/upload/", "/upload/fl_attachment/");
   }
-  // UploadThing & other CDNs — use URL as-is; browser handles the download
+  
   return url;
 };
 
-/** Extract a human-readable filename from Cloudinary URL or key */
 const getFilename = (url: string, key?: string): string => {
   try {
     const raw = key ?? decodeURIComponent(new URL(url).pathname.split("/").pop() ?? "document");
-    // Strip timestamp prefix (e.g. "1714556123456-myfile.pdf" → "myfile.pdf")
+    
     return raw.replace(/^\d+-/, "");
   } catch {
     return "document";
   }
 };
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   TYPES
-───────────────────────────────────────────────────────────────────────────── */
 
 interface PrescriptionViewModalProps {
   appointment: Appointment;
@@ -72,10 +56,6 @@ interface LightboxDoc {
   mimetype?: string;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   LIGHTBOX
-───────────────────────────────────────────────────────────────────────────── */
-
 const Lightbox = ({
   doc,
   onClose,
@@ -86,7 +66,7 @@ const Lightbox = ({
   const isDocPdf = isPdf(doc.mimetype, doc.url);
   const filename = getFilename(doc.url, doc.key);
 
-  // Close on Escape
+  
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -98,7 +78,7 @@ const Lightbox = ({
       className="fixed inset-0 z-[60] flex flex-col bg-black/90 backdrop-blur-sm"
       onClick={onClose}
     >
-      {/* Toolbar */}
+      {}
       <div
         className="flex items-center justify-between px-6 py-3 bg-black/60 shrink-0"
         onClick={(e) => e.stopPropagation()}
@@ -134,7 +114,7 @@ const Lightbox = ({
         </div>
       </div>
 
-      {/* Content */}
+      {}
       <div
         className="flex-1 flex items-center justify-center overflow-hidden p-4"
         onClick={onClose}
@@ -147,7 +127,7 @@ const Lightbox = ({
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element
+          
           <img
             src={doc.url}
             alt={filename}
@@ -159,10 +139,6 @@ const Lightbox = ({
     </div>
   );
 };
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   DOCUMENT CARD
-───────────────────────────────────────────────────────────────────────────── */
 
 const DocCard = ({
   doc,
@@ -183,7 +159,7 @@ const DocCard = ({
 
   return (
     <div className="group relative flex flex-col border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all duration-200">
-      {/* Thumbnail / Preview area */}
+      {}
       <div
         className="relative h-32 bg-gray-50 flex items-center justify-center cursor-pointer overflow-hidden"
         onClick={onPreview}
@@ -197,7 +173,7 @@ const DocCard = ({
             </span>
           </div>
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element
+          
           <img
             src={doc.url}
             alt={filename}
@@ -205,20 +181,20 @@ const DocCard = ({
           />
         )}
 
-        {/* Hover overlay */}
+        {}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
           <Eye className="w-7 h-7 text-white drop-shadow" />
         </div>
       </div>
 
-      {/* Filename */}
+      {}
       <div className="px-3 py-2 flex-1 min-w-0">
         <p className="text-xs text-gray-600 truncate" title={filename}>
           {filename}
         </p>
       </div>
 
-      {/* Actions */}
+      {}
       <div className="px-3 pb-3 flex items-center gap-2">
         <Button
           size="sm"
@@ -247,7 +223,7 @@ const DocCard = ({
           </Button>
         </a>
 
-        {/* Doctor-only delete */}
+        {}
         {userType === "doctor" && (
           <Button
             size="icon"
@@ -269,10 +245,6 @@ const DocCard = ({
   );
 };
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   MAIN MODAL
-───────────────────────────────────────────────────────────────────────────── */
-
 const PrescriptionViewModal = ({
   appointment,
   userType,
@@ -281,7 +253,7 @@ const PrescriptionViewModal = ({
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  /* ── split file state: PDFs → UploadThing, images → Cloudinary ── */
+  
   const [pdfFiles, setPdfFiles] = useState<File[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [uploadingPdf, setUploadingPdf] = useState(false);
@@ -289,12 +261,12 @@ const PrescriptionViewModal = ({
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
   const [pdfUploadProgress, setPdfUploadProgress] = useState<Record<string, number>>({});
 
-  /* lightbox */
+  
   const [lightboxDoc, setLightboxDoc] = useState<LightboxDoc | null>(null);
 
   const { fetchAppointmentById } = useAppointmentStore();
 
-  /* UploadThing hook — PDF route only */
+  
   const { startUpload: startPdfUpload, isUploading: utUploading } = useUploadThing(
     "prescriptionPdf",
     {
@@ -312,7 +284,7 @@ const PrescriptionViewModal = ({
   const otherUser =
     userType === "doctor" ? appointment.patientId : appointment.doctorId;
 
-  /* ── helpers ── */
+  
 
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("en-US", {
@@ -336,7 +308,7 @@ const PrescriptionViewModal = ({
 
   const closeLightbox = useCallback(() => setLightboxDoc(null), []);
 
-  /* ── Upload PDFs via UploadThing ── */
+  
   const submitPdfUpload = async () => {
     if (!pdfFiles.length) return;
     setUploadingPdf(true);
@@ -344,7 +316,7 @@ const PrescriptionViewModal = ({
       const results = await startPdfUpload(pdfFiles);
       if (!results?.length) throw new Error("UploadThing returned no results");
 
-      // Register each uploaded PDF URL in our backend
+      
       await Promise.all(
         results.map((file) =>
           postWithAuth(`/appointments/${appointment._id}/documents/register`, {
@@ -367,7 +339,7 @@ const PrescriptionViewModal = ({
     }
   };
 
-  /* ── Upload images via Cloudinary (existing Express route) ── */
+  
   const submitImageUpload = async () => {
     if (!imageFiles.length) return;
     const form = new FormData();
@@ -385,7 +357,7 @@ const PrescriptionViewModal = ({
     }
   };
 
-  /* ── delete ── */
+  
 
   const confirmDelete = async (key: string) => {
     const ok = confirm("Delete this document permanently?");
@@ -403,7 +375,7 @@ const PrescriptionViewModal = ({
     }
   };
 
-  /* ── local previews for selected-but-not-yet-uploaded files ── */
+  
 
   const localPdfPreviews = pdfFiles.map((file) => ({ file }));
 
@@ -412,23 +384,23 @@ const PrescriptionViewModal = ({
     preview: URL.createObjectURL(file),
   }));
 
-  /* ── render ── */
+  
 
   return (
     <>
-      {/* Trigger */}
+      {}
       <span onClick={() => setIsOpen(true)} className="cursor-pointer">
         {trigger}
       </span>
 
-      {/* Lightbox (rendered outside the modal Card so it covers everything) */}
+      {}
       {lightboxDoc && <Lightbox doc={lightboxDoc} onClose={closeLightbox} />}
 
-      {/* Modal */}
+      {}
       {isOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-4xl max-h-[92vh] overflow-y-auto shadow-2xl border-0">
-            {/* ── Header ── */}
+            {}
             <CardHeader className="flex flex-row justify-between items-center border-b bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-xl">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-100 rounded-lg">
@@ -479,7 +451,7 @@ const PrescriptionViewModal = ({
             </CardHeader>
 
             <CardContent className="space-y-6 pt-6">
-              {/* ── Patient / Doctor meta ── */}
+              {}
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                 <div>
                   <p className="font-semibold text-gray-900">
@@ -497,7 +469,7 @@ const PrescriptionViewModal = ({
                 </div>
               </div>
 
-              {/* ── Prescription text ── */}
+              {}
               {appointment.prescriptionText && (
                 <div className="border border-green-200 bg-green-50 rounded-xl overflow-hidden">
                   <div className="flex items-center gap-2 px-4 py-2 bg-green-100/70 border-b border-green-200">
@@ -512,7 +484,7 @@ const PrescriptionViewModal = ({
                 </div>
               )}
 
-              {/* ── Notes ── */}
+              {}
               {appointment.notes && (
                 <div className="border border-gray-200 bg-gray-50 rounded-xl overflow-hidden">
                   <div className="px-4 py-2 bg-gray-100 border-b border-gray-200">
@@ -526,7 +498,7 @@ const PrescriptionViewModal = ({
                 </div>
               )}
 
-              {/* ── Existing documents ── */}
+              {}
               {documents.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -560,7 +532,7 @@ const PrescriptionViewModal = ({
                 </div>
               )}
 
-              {/* ── Empty state (no docs, no prescription) ── */}
+              {}
               {documents.length === 0 && !appointment.prescriptionText && !appointment.notes && (
                 <div className="text-center py-10 text-gray-400">
                   <FileText className="w-10 h-10 mx-auto mb-2 opacity-30" />
@@ -568,7 +540,7 @@ const PrescriptionViewModal = ({
                 </div>
               )}
 
-              {/* ── Upload section (doctor only) ── */}
+              {}
               {userType === "doctor" && (
                 <div className="border-t pt-5 space-y-6">
                   <h3 className="font-semibold text-gray-900 flex items-center gap-2">
@@ -576,7 +548,7 @@ const PrescriptionViewModal = ({
                     Add Documents
                   </h3>
 
-                  {/* ── PDF dropzone (UploadThing) ── */}
+                  {}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <FileText className="w-4 h-4 text-blue-600" />
@@ -600,7 +572,7 @@ const PrescriptionViewModal = ({
                       />
                     </label>
 
-                    {/* PDF local previews */}
+                    {}
                     {localPdfPreviews.length > 0 && (
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {localPdfPreviews.map(({ file }, i) => (
@@ -629,7 +601,7 @@ const PrescriptionViewModal = ({
                       </div>
                     )}
 
-                    {/* PDF upload progress */}
+                    {}
                     {(uploadingPdf || utUploading) && (
                       <div className="w-full bg-blue-100 rounded-full h-1.5">
                         <div
@@ -660,7 +632,7 @@ const PrescriptionViewModal = ({
                     )}
                   </div>
 
-                  {/* ── Image dropzone (Cloudinary) ── */}
+                  {}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <ImageIcon className="w-4 h-4 text-green-600" />
@@ -684,7 +656,7 @@ const PrescriptionViewModal = ({
                       />
                     </label>
 
-                    {/* Image local previews */}
+                    {}
                     {localImagePreviews.length > 0 && (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         {localImagePreviews.map(({ file, preview }, i) => (
@@ -693,7 +665,7 @@ const PrescriptionViewModal = ({
                             className="relative border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm"
                           >
                             <div className="h-24 bg-gray-50">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              {}
                               <img
                                 src={preview}
                                 alt={file.name}

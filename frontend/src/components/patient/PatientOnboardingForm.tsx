@@ -132,7 +132,7 @@ const PatientOnboardingForm = () => {
         </p>
       </div>
 
-      {/* Progress step */}
+      {}
       <div className="flex items-center justify-center mb-8">
         <div className="flex items-center">
           {[1, 2, 3].map((step) => (

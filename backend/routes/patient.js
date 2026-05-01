@@ -8,7 +8,7 @@ const validate = require("../middleware/validate");
 
 const router = express.Router();
 
-//Get the profile of patient
+
 router.get(
   "/me",
   authenticate,
@@ -20,7 +20,7 @@ router.get(
   }
 );
 
-//update patient profile
+
 router.put("/onboarding/update", authenticate, requireRole("patient"), [
   body("name").optional().notEmpty(),
   body("phone").optional().isString(),
@@ -46,7 +46,7 @@ router.put("/onboarding/update", authenticate, requireRole("patient"), [
             updated.age = computeAgeFromDob(updated.dob)
          }
          delete updated.password;
-         updated.isVerified = true; //Mark profile as verified on update
+         updated.isVerified = true; 
          const doc = await Patient.findByIdAndUpdate(req.user._id,updated, {new:true}).select('-password -googleId');
          res.ok(doc, 'Profile updated')
     } catch (error) {

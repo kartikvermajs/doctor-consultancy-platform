@@ -5,8 +5,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle, X, Send, Loader2, Bot } from "lucide-react";
 import { postWithAuth } from "@/service/httpService";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 type Role = "assistant" | "user";
 
 interface ChatMessage {
@@ -15,8 +13,6 @@ interface ChatMessage {
   text: string;
   timestamp: Date;
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const formatTime = (date: Date): string =>
   date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
@@ -30,8 +26,6 @@ const GREETING: ChatMessage = {
   timestamp: new Date(),
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 const FloatingChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -41,12 +35,12 @@ const FloatingChatWidget = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages change
+  
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Focus input when chat opens
+  
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 300);
@@ -59,7 +53,7 @@ const FloatingChatWidget = () => {
     const text = message.trim();
     if (!text || isLoading) return;
 
-    // Optimistically add user message
+    
     const userMsg: ChatMessage = {
       id: uid(),
       role: "user",
@@ -104,7 +98,7 @@ const FloatingChatWidget = () => {
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-      {/* ── Chat Panel ─────────────────────────────────────────────────── */}
+      {}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -115,7 +109,7 @@ const FloatingChatWidget = () => {
             className="mb-4 w-[350px] sm:w-[380px] max-w-[calc(100vw-3rem)] bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col pointer-events-auto"
             style={{ height: "480px" }}
           >
-            {/* Header */}
+            {}
             <div className="bg-primary px-4 py-3.5 flex justify-between items-center text-white shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
@@ -139,7 +133,7 @@ const FloatingChatWidget = () => {
               </button>
             </div>
 
-            {/* Messages */}
+            {}
             <div className="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col gap-3">
               {messages.map((msg) => (
                 <div
@@ -169,7 +163,7 @@ const FloatingChatWidget = () => {
                 </div>
               ))}
 
-              {/* Typing indicator */}
+              {}
               {isLoading && (
                 <div className="flex justify-start">
                   <div className="bg-white border border-gray-100 shadow-sm rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1.5">
@@ -183,7 +177,7 @@ const FloatingChatWidget = () => {
               <div ref={bottomRef} />
             </div>
 
-            {/* Input */}
+            {}
             <div className="p-3 bg-white border-t border-gray-100 shrink-0">
               <div className="flex items-center bg-gray-50 rounded-full border border-gray-200 px-3 py-2 pr-1 focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
                 <input
@@ -218,7 +212,7 @@ const FloatingChatWidget = () => {
         )}
       </AnimatePresence>
 
-      {/* ── Toggle Button ───────────────────────────────────────────────── */}
+      {}
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

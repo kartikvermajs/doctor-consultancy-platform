@@ -6,21 +6,20 @@ const auth = require("../middleware/auth");
 
 const router = express.Router();
 
-/* =========================================================
-   UPLOAD DOCUMENTS (HARDENED)
-   ========================================================= */
+
+
 
 router.post(
   "/:appointmentId/documents",
   auth.authenticate,
 
-  /* ---------- Multer wrapper with logging + error handling ---------- */
+  
   (req, res, next) => {
     console.log("▶ [UPLOAD] Multer upload started");
 
     let responded = false;
 
-    // Safety timeout (30 seconds)
+    
     const timeout = setTimeout(() => {
       if (!responded) {
         responded = true;
@@ -50,7 +49,7 @@ router.post(
     });
   },
 
-  /* ---------- Business logic ---------- */
+  
   async (req, res) => {
     try {
       console.log("▶ [UPLOAD] Handler started");
@@ -98,11 +97,8 @@ router.post(
   },
 );
 
-/* =========================================================
-   REGISTER UPLOADTHING DOCUMENT (PDF from client-side upload)
-   Client uploads PDF directly to UploadThing CDN, then calls
-   this endpoint to save the URL/key reference in MongoDB.
-   ========================================================= */
+
+
 
 router.post(
   "/:appointmentId/documents/register",
@@ -145,11 +141,8 @@ router.post(
   }
 );
 
-/* =========================================================
-   DELETE DOCUMENT (HARDENED)
-   Deletes from Cloudinary (images) OR just removes the DB ref
-   for UploadThing PDFs (identified by ufs.uploadthing.com URL).
-   ========================================================= */
+
+
 
 router.delete(
   "/:appointmentId/documents/:key",
@@ -162,13 +155,13 @@ router.delete(
 
       const { appointmentId, key } = req.params;
 
-      // Find the document to check which CDN it belongs to
+      
       const appointment = await Appointment.findById(appointmentId);
       const doc = appointment?.documents?.find((d) => d.key === key);
 
       console.log("🗑 [DELETE] Deleting document:", key);
 
-      // Only destroy from Cloudinary if it's a Cloudinary-hosted file
+      
       if (doc && !doc.url?.includes("uploadthing.com") && !doc.url?.includes("ufs.sh")) {
         try {
           await cloudinary.uploader.destroy(key, { invalidate: true });

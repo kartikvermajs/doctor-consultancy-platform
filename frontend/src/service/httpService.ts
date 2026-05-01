@@ -36,9 +36,9 @@ class HttpService {
         ...options?.headers,
       };
 
-      // IMPORTANT:
-      // - Do NOT set Content-Type for FormData
-      // - Browser sets multipart boundary automatically
+      
+      
+      
       if (!isFormData) {
         headers["Content-Type"] = "application/json";
       }
@@ -67,7 +67,7 @@ class HttpService {
     }
   }
 
-  /* ---------------- AUTH REQUESTS ---------------- */
+  
 
   async getWithAuth<T = any>(
     endPoint: string,
@@ -99,7 +99,7 @@ class HttpService {
     return this.makeRequest<T>(endPoint, "DELETE", undefined, true, options);
   }
 
-  /* ---------------- NON-AUTH REQUESTS ---------------- */
+  
 
   async postWithoutAuth<T = any>(
     endPoint: string,
@@ -116,7 +116,7 @@ class HttpService {
     return this.makeRequest<T>(endPoint, "GET", undefined, false, options);
   }
 
-  /* ---------------- FORM DATA (UPLOADS) ---------------- */
+  
 
   async postFormWithAuth<T = any>(
     endPoint: string,
@@ -127,12 +127,12 @@ class HttpService {
       "POST",
       formData,
       true,
-      { headers: {} }, // allow browser to set multipart boundary
+      { headers: {} }, 
     );
   }
 }
 
-/* ---------------- EXPORTS ---------------- */
+
 
 export const httpService = new HttpService();
 

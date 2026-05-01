@@ -2,9 +2,8 @@ const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../config/cloudinary");
 
-/* =========================================================
-   ALLOWED FILE TYPES
-   ========================================================= */
+
+
 
 const IMAGE_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
@@ -12,9 +11,8 @@ const PDF_MIME_TYPES = ["application/pdf"];
 
 const ALLOWED_MIME_TYPES = [...IMAGE_MIME_TYPES, ...PDF_MIME_TYPES];
 
-/* =========================================================
-   CLOUDINARY STORAGE CONFIG
-   ========================================================= */
+
+
 
 const storage = new CloudinaryStorage({
   cloudinary,
@@ -35,9 +33,8 @@ const storage = new CloudinaryStorage({
   },
 });
 
-/* =========================================================
-   MULTER FILE FILTER
-   ========================================================= */
+
+
 
 const fileFilter = (req, file, cb) => {
   if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
@@ -53,15 +50,14 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
-/* =========================================================
-   MULTER INSTANCE
-   ========================================================= */
+
+
 
 const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB per file
+    fileSize: 10 * 1024 * 1024, 
     files: 5,
   },
 });

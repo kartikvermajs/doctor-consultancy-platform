@@ -55,18 +55,18 @@ interface BookingData {
 }
 
 interface AppointmentState {
-  /* ---------- STATE ---------- */
+  
   appointments: Appointment[];
   bookedSlots: string[];
   currentAppointment: Appointment | null;
   loading: boolean;
   error: string | null;
 
-  /* ---------- LOCAL ACTIONS ---------- */
+  
   clearError: () => void;
   setCurrentAppointment: (appointment: Appointment) => void;
 
-  /* ---------- API ACTIONS ---------- */
+  
   fetchAppointments: (
     role: "doctor" | "patient",
     tab?: string,
@@ -92,7 +92,7 @@ interface AppointmentState {
     status: string,
   ) => Promise<void>;
 
-  /* ---------- DOCUMENT ACTIONS (NEW + REQUIRED) ---------- */
+  
   uploadDocuments: (
     appointmentId: string,
     files: AppointmentDocument[],
@@ -157,7 +157,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     try {
       const response = await getWithAuth(`/appointment/${appointmentId}`);
       const updated = response?.data?.appointment;
-      // Patch both currentAppointment AND the list so counts/docs stay in sync
+      
       set((state) => ({
         currentAppointment: updated,
         appointments: state.appointments.map((a) =>
@@ -228,7 +228,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     await deleteWithAuth(
       `/appointments/${appointmentId}/documents/${key}`,
     );
-    // Refresh from server to get latest document list
+    
     const res = await getWithAuth(`/appointment/${appointmentId}`);
     const updated = res?.data?.appointment;
     set((state) => ({

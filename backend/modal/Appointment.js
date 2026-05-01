@@ -4,7 +4,7 @@ const documentSchema = new mongoose.Schema(
   {
     url: { type: String, required: true },
     key: { type: String, required: true },
-    mimetype: { type: String, default: "" }, // e.g. "application/pdf" or "image/jpeg"
+    mimetype: { type: String, default: "" }, 
     type: {
       type: String,
       enum: ["lab-report", "prescription", "other"],
@@ -51,14 +51,14 @@ const appointmentSchema = new mongoose.Schema(
     symptoms: { type: String, default: "" },
     zegoRoomId: { type: String },
 
-    // 🧠 Doctor content
+    
     prescriptionText: { type: String, default: "" },
     notes: { type: String, default: "" },
 
-    // 📎 Uploaded documents (images / PDFs)
+    
     documents: [documentSchema],
 
-    // 💰 Payment
+    
     consultationFees: { type: Number, required: true },
     platformFees: { type: Number, required: true },
     totalAmount: { type: Number, required: true },

@@ -17,7 +17,7 @@ export interface Review {
 }
 
 interface ReviewState {
-  /* Cache: appointmentId → { reviewed, review } */
+  
   reviewCache: Record<string, { reviewed: boolean; review: Review | null }>;
   submitting: boolean;
   error: string | null;
@@ -66,7 +66,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
         return { success: false, alreadyReviewed: true, message: res.message };
       }
 
-      /* Update cache */
+      
       set((state) => ({
         reviewCache: {
           ...state.reviewCache,

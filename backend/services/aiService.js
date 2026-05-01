@@ -1,18 +1,6 @@
-/**
- * aiService.js
- * ------------
- * RESPONSIBILITY: All communication with the Google Gemini AI model.
- *
- * CONTRACT:
- *   Input  → { context: string, userMessage: string, patientName: string }
- *   Output → string (clean reply text, ready to send to frontend)
- *
- * To swap to a different LLM later: only edit this file.
- */
+
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-
-// ─── Gemini Initialisation ────────────────────────────────────────────────────
 
 let genAI = null;
 let model = null;
@@ -32,17 +20,6 @@ const getModel = () => {
   return model;
 };
 
-// ─── Prompt Builder ───────────────────────────────────────────────────────────
-
-/**
- * Build the full prompt sent to Gemini.
- * Keeping this separate makes it easy to iterate on prompt engineering.
- *
- * @param {string} context      - Structured patient history from contextService
- * @param {string} userMessage  - Raw message from the patient
- * @param {string} patientName  - For personalised responses
- * @returns {string}
- */
 const buildPrompt = (context, userMessage, patientName) => {
   return `
 You are a compassionate and knowledgeable medical assistant on a doctor consultation platform.
@@ -67,29 +44,19 @@ Please respond helpfully, clearly, and empathetically based on the patient's his
 `.trim();
 };
 
-// ─── Main Export ──────────────────────────────────────────────────────────────
-
 const FALLBACK_RESPONSE =
   "Sorry, I couldn't process your request right now. Please try again in a moment, or consult your doctor directly.";
 
-const REQUEST_TIMEOUT_MS = 15000; // 15 seconds
+const REQUEST_TIMEOUT_MS = 15000; 
 
-/**
- * Generate a context-aware AI reply using Google Gemini.
- *
- * @param {string} context      - Structured patient context from contextService
- * @param {string} userMessage  - Sanitised message from the patient
- * @param {string} [patientName="there"]
- * @returns {Promise<string>}   - Clean reply text
- */
 const generateReply = async (context, userMessage, patientName = "there") => {
-  // ── 1. Sanitise input ─────────────────────────────────────────────────
-  const sanitisedMessage = userMessage.trim().slice(0, 2000); // cap at 2000 chars
+  
+  const sanitisedMessage = userMessage.trim().slice(0, 2000); 
 
-  // ── 2. Build prompt ───────────────────────────────────────────────────
+  
   const prompt = buildPrompt(context, sanitisedMessage, patientName);
 
-  // ── 3. Call Gemini with timeout ───────────────────────────────────────
+  
   const geminiCall = async () => {
     const geminiModel = getModel();
     const result = await geminiModel.generateContent(prompt);
@@ -121,5 +88,5 @@ const generateReply = async (context, userMessage, patientName = "there") => {
 
 module.exports = {
   generateReply,
-  buildPrompt, // exported for testing / prompt engineering
+  buildPrompt, 
 };

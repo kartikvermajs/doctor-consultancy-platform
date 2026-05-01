@@ -13,11 +13,10 @@ const response = require("./middleware/response");
 
 const app = express();
 
-//helmet is a security middleware for Express
-//It helps protect your app by settings various HTTP headers
+
 app.use(helmet());
 
-//morgan is an HTTP request logger middleware
+
 app.use(morgan("dev"));
 app.use(
   cors({
@@ -32,13 +31,13 @@ app.use(
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-//used response
+
 app.use(response);
 
-//Initialize passport
+
 app.use(passportLib.initialize());
 
-//Mongodb connection
+
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,

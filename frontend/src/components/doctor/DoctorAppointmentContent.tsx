@@ -22,6 +22,51 @@ import { Badge } from "../ui/badge";
 import { emptyStates, getStatusColor } from "@/lib/constant";
 import PrescriptionViewModal from "./PrescriptionViewModal";
 import FloatingChatWidget from "../shared/FloatingChatWidget";
+import { useReviewStore } from "@/store/reviewStore";
+
+
+const ReviewStars = ({ appointmentId }: { appointmentId: string }) => {
+  const { checkReview } = useReviewStore();
+  const [rating, setRating] = React.useState<number | null>(null);
+  const [comment, setComment] = React.useState<string>("");
+
+  useEffect(() => {
+    checkReview(appointmentId).then(({ reviewed, review }) => {
+      if (reviewed && review) {
+        setRating(review.rating);
+        setComment(review.comment ?? "");
+      }
+    });
+  }, [appointmentId, checkReview]);
+
+  if (!rating) return null;
+
+  return (
+    <div className="space-y-1.5 mt-1">
+      {}
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((s) => (
+          <Star
+            key={s}
+            className={`w-4 h-4 ${
+              s <= rating
+                ? "fill-yellow-400 text-yellow-400"
+                : "fill-gray-100 text-gray-300"
+            }`}
+          />
+        ))}
+        <span className="text-xs text-gray-500 ml-1">{rating}/5</span>
+      </div>
+
+      {}
+      {comment && (
+        <p className="text-xs text-gray-500 italic bg-gray-50 border border-gray-100 rounded-lg px-3 py-1.5 line-clamp-2">
+          &ldquo;{comment}&rdquo;
+        </p>
+      )}
+    </div>
+  );
+};
 
 const DoctorAppointmentContent = () => {
   const { user } = userAuthStore();
@@ -29,14 +74,14 @@ const DoctorAppointmentContent = () => {
     useAppointmentStore();
 
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
-  /* ---------------- fetch appointments ---------------- */
+  
   useEffect(() => {
     if (user?.type === "doctor") {
       fetchAppointments("doctor");
     }
   }, [user, fetchAppointments]);
 
-  /* ---------------- derived appointment lists ---------------- */
+  
   const upcomingAppointments = React.useMemo(() => {
     const now = new Date();
     return appointments.filter((apt) => {
@@ -58,7 +103,7 @@ const DoctorAppointmentContent = () => {
     });
   }, [appointments]);
 
-  /* ---------------- helpers ---------------- */
+  
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("en-US", {
       weekday: "long",
@@ -99,7 +144,7 @@ const DoctorAppointmentContent = () => {
     past: "completed",
   };
 
-  /* ---------------- appointment card ---------------- */
+  
   const AppointmentCard = ({ appointment }: { appointment: Appointment }) => (
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-6">
@@ -193,14 +238,7 @@ const DoctorAppointmentContent = () => {
             </div>
 
             {appointment.status === "Completed" && (
-              <div className="flex gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                  />
-                ))}
-              </div>
+              <ReviewStars appointmentId={appointment._id} />
             )}
           </div>
         </div>
@@ -208,7 +246,7 @@ const DoctorAppointmentContent = () => {
     </Card>
   );
 
-  /* ---------------- empty state ---------------- */
+  
   const EmptyState = ({ tab }: { tab: Tab }) => {
     const state = emptyStates[EMPTY_STATE_KEY_MAP[tab]];
     const Icon = state.icon;
@@ -224,7 +262,7 @@ const DoctorAppointmentContent = () => {
     );
   };
 
-  /* ---------------- render ---------------- */
+  
   return (
     <>
       <Header showDashboardNav />

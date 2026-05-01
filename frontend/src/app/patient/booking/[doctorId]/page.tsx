@@ -23,7 +23,7 @@ const page = () => {
   const { bookAppointment, loading, fetchBookedSlots, bookedSlots } =
     useAppointmentStore();
 
-  ///state
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedSlot, setSelectedSlot] = useState("");
@@ -49,21 +49,21 @@ const page = () => {
     }
   }, [selectedDate, doctorId, fetchBookedSlots]);
 
-  //Generate avaiable dates
+  
   useEffect(() => {
     if (currentDoctor?.availabilityRange) {
       const startDate = new Date(currentDoctor?.availabilityRange.startDate);
-      //Convert doctor's start date string into a Date Object
+      
 
       const endDate = new Date(currentDoctor?.availabilityRange.endDate);
-      //Convert doctor's end date string into a Date Object
+      
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      //get today's date and reset time to midnight
+      
 
       const dates: string[] = [];
-      //Empty list to hold avaiable dates
+      
 
       const iterationStart = new Date(
         Math.max(today.getTime(), startDate.getTime())
@@ -75,27 +75,27 @@ const page = () => {
         d.setDate(d.getDate() + 1)
       ) {
         dates.push(toLocalYMD(d));
-        //Convert date into YYYY-MM-DD format and add to list
+        
       }
 
       setAvailableDates(dates);
     }
   }, [currentDoctor]);
 
-  //Generate avaiable slots
+  
   useEffect(() => {
     if (selectedDate && currentDoctor?.dailyTimeRanges) {
       const slots: string[] = [];
-      //Empty list to hold avaiable dates
+      
 
       const slotDuration = currentDoctor?.slotDurationMinutes || 30;
 
       currentDoctor.dailyTimeRanges.forEach((timeRange:any) => {
         const startMintues = timeToMinutes(timeRange.start);
-        //Convert start time (e.g, "12:00") => total mintues (e.g., 540)
+        
 
         const endMintues = timeToMinutes(timeRange.end);
-        //Convert end time (e.g, "3:00") => total mintues (e.g., 740)
+        
 
         for (
           let mintues = startMintues;
@@ -104,7 +104,7 @@ const page = () => {
         ) {
           slots.push(minutesToTime(mintues));
 
-          //Convert mintues back to HH:MM format and add to slots
+          
         }
       });
 
@@ -149,7 +149,7 @@ const page = () => {
       });
 
 
-      //store appointemnt Id and patinet name for paymnet 
+      
       if(appointment && appointment?._id) {
         setCreatedAppointmentId(appointment._id);
         setPatientName(appointment.patientId.name || 'Patient')
@@ -210,7 +210,7 @@ const page = () => {
               </div>
             </div>
 
-            {/* Process Indicator */}
+            {}
 
             <div className="hidden md:flex items-center space-x-4">
               {[1, 2, 3].map((step) => (

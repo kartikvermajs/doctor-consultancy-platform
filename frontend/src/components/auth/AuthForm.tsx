@@ -1,4 +1,4 @@
-// src/components/auth/AuthForm.tsx
+
 'use client';
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -105,7 +105,7 @@ interface AuthFormProps {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name field for signup */}
+            {}
             {isSignup && (
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
@@ -120,7 +120,7 @@ interface AuthFormProps {
               </div>
             )}
 
-            {/* Email */}
+            {}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -133,7 +133,7 @@ interface AuthFormProps {
               />
             </div>
 
-            {/* Password */}
+            {}
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -161,7 +161,7 @@ interface AuthFormProps {
               </div>
             </div>
 
-            {/* Terms checkbox for signup */}
+            {}
             {isSignup && (
               <div className="flex items-start space-x-2">
                 <Checkbox

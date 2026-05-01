@@ -6,7 +6,7 @@ const reviewSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Appointment",
       required: true,
-      unique: true, // ← DB-level uniqueness: ONE review per appointment, forever
+      unique: true, 
     },
     doctorId: {
       type: mongoose.Schema.Types.ObjectId,

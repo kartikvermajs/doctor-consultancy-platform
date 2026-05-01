@@ -14,11 +14,11 @@ interface DoctorState {
     total: number;
   };
 
-  //Action
+  
   clearError: () => void;
   setCurrentDoctor: (doctor: Doctor) => void;
 
-  //Api Action
+  
   fetchDoctors: (filters: DoctorFilters) => Promise<void>;
   fetchDoctorById: (id: string) => Promise<void>;
   fetchDashboard: (period?:string) => Promise<void>

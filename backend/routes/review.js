@@ -7,9 +7,6 @@ const Appointment = require("../modal/Appointment");
 
 const router = express.Router();
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   POST /api/review  — Submit a review (patient only)
-═══════════════════════════════════════════════════════════════════════════ */
 router.post(
   "/",
   authenticate,
@@ -31,13 +28,13 @@ router.post(
       const { appointmentId, rating, comment } = req.body;
       const patientId = req.auth.id;
 
-      /* ── 1. Appointment must exist ── */
+      
       const appointment = await Appointment.findById(appointmentId);
       if (!appointment) {
         return res.notFound("Appointment not found");
       }
 
-      /* ── 2. Must be Completed ── */
+      
       if (appointment.status !== "Completed") {
         return res.status(400).json({
           success: false,
@@ -45,14 +42,14 @@ router.post(
         });
       }
 
-      /* ── 3. Logged-in patient must be THE patient of this appointment ── */
+      
       if (appointment.patientId.toString() !== patientId) {
         return res.forbidden(
           "You are not authorised to review this appointment"
         );
       }
 
-      /* ── 4. One review per appointment (also enforced at DB level) ── */
+      
       const existing = await Review.findOne({ appointmentId });
       if (existing) {
         return res.status(409).json({
@@ -63,7 +60,7 @@ router.post(
         });
       }
 
-      /* ── 5. Save ── */
+      
       const review = await Review.create({
         appointmentId,
         doctorId: appointment.doctorId,
@@ -84,7 +81,7 @@ router.post(
         alreadyReviewed: false,
       });
     } catch (error) {
-      /* Duplicate key error from Mongo unique index */
+      
       if (error.code === 11000) {
         return res.status(409).json({
           success: false,
@@ -98,10 +95,6 @@ router.post(
   }
 );
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   GET /api/review/appointment/:appointmentId
-   Check whether the logged-in patient has already reviewed a specific appointment
-═══════════════════════════════════════════════════════════════════════════ */
 router.get(
   "/appointment/:appointmentId",
   authenticate,
@@ -123,10 +116,6 @@ router.get(
   }
 );
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   GET /api/review/doctor/:doctorId
-   All reviews for a doctor — public, paginated, newest first
-═══════════════════════════════════════════════════════════════════════════ */
 router.get(
   "/doctor/:doctorId",
   [param("doctorId").isMongoId()],

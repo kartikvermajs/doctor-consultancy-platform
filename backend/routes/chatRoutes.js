@@ -1,11 +1,4 @@
-/**
- * chatRoutes.js
- * -------------
- * Mounts the chat endpoint and enforces authentication.
- *
- * Route: POST /api/chat
- * Auth:  JWT required (patients only)
- */
+
 
 const express = require("express");
 const { body } = require("express-validator");

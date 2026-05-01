@@ -68,7 +68,7 @@ export const healthcareCategories = [
   },
 ];
 
-// Healthcare categories (matches backend)
+
 export const healthcareCategoriesList = [
   "Primary Care",
   "Manage Your Condition",

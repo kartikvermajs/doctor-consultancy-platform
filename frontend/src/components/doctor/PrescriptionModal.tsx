@@ -64,7 +64,7 @@ const PrescriptionModal = ({
             </p>
           </div>
 
-          {/* Prescription */}
+          {}
           <div className="space-y-2">
             <Label>Prescription *</Label>
             <Textarea
@@ -75,7 +75,7 @@ const PrescriptionModal = ({
             />
           </div>
 
-          {/* Notes */}
+          {}
           <div className="space-y-2">
             <Label>Additional Notes</Label>
             <Textarea
@@ -85,7 +85,7 @@ const PrescriptionModal = ({
             />
           </div>
 
-          {/* Actions */}
+          {}
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button variant="outline" onClick={handleClose}>
               Cancel
