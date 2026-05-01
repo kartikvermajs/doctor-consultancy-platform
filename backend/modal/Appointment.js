@@ -50,6 +50,7 @@ const appointmentSchema = new mongoose.Schema(
 
     symptoms: { type: String, default: "" },
     zegoRoomId: { type: String },
+    doctorEnded: { type: Boolean, default: false },
 
     
     prescriptionText: { type: String, default: "" },

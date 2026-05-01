@@ -31,6 +31,7 @@ export interface Appointment {
   documentSummary?: string;
 
   zegoRoomId?: string;
+  doctorEnded?: boolean;
 
   createdAt: string;
 }
@@ -248,6 +249,11 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await getWithAuth(`/appointment/join/${appointmentId}`);
+
+      if (!(response as any).success && (response as any).code === "SESSION_ENDED_BY_DOCTOR") {
+        throw new Error("SESSION_ENDED_BY_DOCTOR");
+      }
+
       set((state) => ({
         appointments: state.appointments.map((apt) =>
           apt._id === appointmentId
@@ -262,6 +268,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
       return response.data;
     } catch (error: any) {
+      if (error.message === "SESSION_ENDED_BY_DOCTOR") throw error;
       set({ error: error.message });
     } finally {
       set({ loading: false });
