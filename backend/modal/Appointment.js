@@ -57,6 +57,7 @@ const appointmentSchema = new mongoose.Schema(
 
     
     documents: [documentSchema],
+    documentSummary: { type: String, default: "" },
 
     
     consultationFees: { type: Number, required: true },

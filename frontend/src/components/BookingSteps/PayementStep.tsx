@@ -1,70 +1,14 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+"use client";
 
 import { httpService } from "@/service/httpService";
 import { userAuthStore } from "@/store/authStore";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Separator } from "../ui/separator";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   CheckCircle,
   CreditCard,
+  FlaskConical,
   Loader2,
   Shield,
   XCircle,
@@ -94,6 +38,8 @@ interface PaymentStepInterface {
   patientName?: string;
 }
 
+const IS_DEV = process.env.NODE_ENV !== "production";
+
 const PayementStep = ({
   selectedDate,
   selectedSlot,
@@ -119,7 +65,6 @@ const PayementStep = ({
   const platformFees = Math.round(consultationFee * 0.1);
   const totalAmount = consultationFee + platformFees;
 
-  
   useEffect(() => {
     if (!window.Razorpay) {
       const script = document.createElement("script");
@@ -129,16 +74,26 @@ const PayementStep = ({
     }
   }, []);
 
-  const handlePayment = async () => {
+  const handleVerifyAndFinish = async (verifyResponse: any) => {
+    if (!verifyResponse.success) {
+      throw new Error(verifyResponse.message || "Payment verification failed");
+    }
+    setPaymentStatus("success");
+    setTimeout(() => {
+      onPaymentSuccess
+        ? onPaymentSuccess(verifyResponse.data)
+        : onConfirm();
+    }, 1200);
+  };
+
+  const handleRazorpayPayment = async () => {
     if (!appointmentId || !patientName) {
       onConfirm();
       return;
     }
 
     try {
-      if (!window.Razorpay) {
-        throw new Error("Razorpay SDK not loaded");
-      }
+      if (!window.Razorpay) throw new Error("Razorpay SDK not loaded");
 
       setIsPaymentLoading(true);
       setPaymentStatus("processing");
@@ -149,15 +104,14 @@ const PayementStep = ({
         { appointmentId },
       );
 
-      if (!orderResponse.success) {
+      if (!orderResponse.success)
         throw new Error(orderResponse.message || "Order creation failed");
-      }
 
       const { orderId, amount, currency, key } = orderResponse.data;
 
       const options = {
         key,
-        amount, 
+        amount,
         currency,
         name: "Doctor Consultation Platform",
         description: `Consultation with Dr. ${doctorName}`,
@@ -174,18 +128,7 @@ const PayementStep = ({
                 razorpay_signature: response.razorpay_signature,
               },
             );
-
-            if (!verifyResponse.success) {
-              throw new Error(
-                verifyResponse.message || "Payment verification failed",
-              );
-            }
-
-            setPaymentStatus("success");
-
-            onPaymentSuccess
-              ? onPaymentSuccess(verifyResponse.data)
-              : onConfirm();
+            await handleVerifyAndFinish(verifyResponse);
           } catch (err: any) {
             setError(err.message || "Payment verification failed");
             setPaymentStatus("failed");
@@ -198,15 +141,8 @@ const PayementStep = ({
           contact: user?.phone,
         },
 
-        notes: {
-          appointmentId,
-          doctorName,
-          patientName,
-        },
-
-        theme: {
-          color: "#16a34a",
-        },
+        notes: { appointmentId, doctorName, patientName },
+        theme: { color: "#16a34a" },
 
         modal: {
           ondismiss: () => {
@@ -226,16 +162,36 @@ const PayementStep = ({
     }
   };
 
+  const handleSimulatePayment = async () => {
+    if (!appointmentId) return;
+    try {
+      setIsPaymentLoading(true);
+      setPaymentStatus("processing");
+      setError("");
+
+      const res = await httpService.postWithAuth("/payment/simulate-success", {
+        appointmentId,
+      });
+
+      await handleVerifyAndFinish(res);
+    } catch (err: any) {
+      setError(err.message || "Simulation failed");
+      setPaymentStatus("failed");
+    } finally {
+      setIsPaymentLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
-      <h3 className="text-2xl font-bold">Payment & Confirmation</h3>
+      <h3 className="text-2xl font-bold">Payment &amp; Confirmation</h3>
 
       <div className="bg-gray-50 rounded-lg p-6">
         <h4 className="font-semibold mb-4">Booking Summary</h4>
 
         <div className="space-y-3">
           <div className="flex justify-between">
-            <span>Date & Time</span>
+            <span>Date &amp; Time</span>
             <span>
               {selectedDate?.toLocaleDateString()} at {selectedSlot}
             </span>
@@ -279,26 +235,45 @@ const PayementStep = ({
 
       <AnimatePresence mode="wait">
         {paymentStatus === "processing" && (
-          <motion.div className="text-center py-8">
+          <motion.div
+            key="processing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="text-center py-8 space-y-4"
+          >
             <Loader2 className="w-10 h-10 mx-auto animate-spin text-green-600" />
-            <p className="mt-4">Processing payment…</p>
-            <Progress value={50} />
+            <p className="text-gray-600">Processing payment…</p>
+            <Progress value={60} className="max-w-xs mx-auto" />
           </motion.div>
         )}
 
         {paymentStatus === "success" && (
-          <motion.div className="text-center py-8">
+          <motion.div
+            key="success"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-center py-8"
+          >
             <CheckCircle className="w-14 h-14 mx-auto text-green-600" />
-            <p className="mt-4 font-semibold text-green-700">
-              Payment Successful
+            <p className="mt-4 font-semibold text-green-700 text-lg">
+              Payment Successful!
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              Redirecting to your dashboard…
             </p>
           </motion.div>
         )}
 
         {paymentStatus === "failed" && (
-          <motion.div className="text-center py-8">
-            <XCircle className="w-14 h-14 mx-auto text-red-600" />
-            <p className="mt-4 text-red-600">{error}</p>
+          <motion.div
+            key="failed"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-8"
+          >
+            <XCircle className="w-14 h-14 mx-auto text-red-500" />
+            <p className="mt-4 text-red-600 font-medium">{error}</p>
             <Button
               variant="outline"
               className="mt-4"
@@ -311,16 +286,65 @@ const PayementStep = ({
       </AnimatePresence>
 
       {paymentStatus === "idle" && (
-        <div className="space-y-6">
-          <div className="bg-blue-50 text-blue-800 p-4 rounded-lg text-sm border border-blue-200">
-            <p className="font-semibold mb-2">Test Mode Credentials:</p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Fastest Method:</strong> Select <strong>Netbanking</strong> (choose any bank like SBI/HDFC) in the popup. It works instantly with 1 click! (Note: UPI only shows QR codes on desktop now).</li>
-              <li><strong>If using Card:</strong> Use Domestic Visa: <strong>4100 2800 0000 1007</strong> or RuPay: <strong>6527 6589 0000 1005</strong></li>
-              <li><span className="font-semibold text-red-600">CRITICAL:</span> You MUST uncheck the <strong>"Save card securely"</strong> option before paying, otherwise Razorpay will fail with a tokenization error.</li>
-              <li><strong>Success Steps:</strong> Expiry: Any future date | CVV: Any 3 digits | <strong>OTP: Enter 1234 and click Submit/Success!</strong></li>
-            </ul>
-          </div>
+        <div className="space-y-5">
+          {IS_DEV && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm space-y-3">
+              <p className="font-semibold text-amber-800 flex items-center gap-2">
+                <FlaskConical className="w-4 h-4" />
+                Test Mode — No Real Money
+              </p>
+
+              <div className="bg-white border border-amber-100 rounded-lg px-4 py-3">
+                <p className="font-semibold text-gray-800 mb-1">
+                  ⚡ Fastest: Simulate Payment (skip popup)
+                </p>
+                <p className="text-gray-500 text-xs">
+                  Marks payment as Paid instantly without opening Razorpay.
+                  Perfect for rapid testing.
+                </p>
+                <Button
+                  onClick={handleSimulatePayment}
+                  disabled={loading || isPaymentLoading}
+                  className="mt-2 bg-amber-500 hover:bg-amber-600 text-white gap-2 w-full"
+                  size="sm"
+                >
+                  <FlaskConical className="w-3.5 h-3.5" />
+                  Simulate Payment ₹{totalAmount}
+                </Button>
+              </div>
+
+              <div className="text-gray-600 space-y-1">
+                <p className="font-medium text-gray-700">
+                  Or use the Razorpay test popup:
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-xs">
+                  <li>
+                    <strong>Netbanking</strong> (fastest) — pick any bank, click
+                    Success
+                  </li>
+                  <li>
+                    <strong>Card:</strong>{" "}
+                    <span className="font-mono bg-amber-100 px-1 rounded">
+                      4111 1111 1111 1111
+                    </span>
+                    {" "}· any future expiry · CVV{" "}
+                    <span className="font-mono bg-amber-100 px-1 rounded">111</span>
+                  </li>
+                  <li>
+                    OTP:{" "}
+                    <span className="font-mono bg-amber-100 px-1 rounded">
+                      1234
+                    </span>{" "}
+                    → click <strong>Success</strong>
+                  </li>
+                  <li className="text-red-600">
+                    ⚠ Uncheck <strong>&quot;Save card securely&quot;</strong>{" "}
+                    before paying (avoids tokenization error)
+                  </li>
+                </ul>
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-between">
             <Button variant="outline" onClick={onBack}>
@@ -328,20 +352,20 @@ const PayementStep = ({
             </Button>
 
             <Button
-              onClick={handlePayment}
+              onClick={handleRazorpayPayment}
               disabled={loading || isPaymentLoading}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 gap-2"
             >
-              <CreditCard className="w-4 h-4 mr-2" />
-              Pay ₹{totalAmount}
+              <CreditCard className="w-4 h-4" />
+              Pay with Razorpay ₹{totalAmount}
             </Button>
           </div>
         </div>
       )}
 
-      <div className="flex items-center gap-3 bg-green-50 p-4 rounded-lg">
-        <Shield className="text-green-600" />
-        <span>256-bit SSL secured payment</span>
+      <div className="flex items-center gap-3 bg-green-50 p-4 rounded-lg text-sm text-green-800">
+        <Shield className="text-green-600 shrink-0" />
+        <span>256-bit SSL encrypted · Razorpay test mode active</span>
       </div>
     </div>
   );

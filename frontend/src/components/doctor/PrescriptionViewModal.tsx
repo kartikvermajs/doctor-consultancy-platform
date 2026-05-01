@@ -12,6 +12,7 @@ import {
   Image as ImageIcon,
   Loader2,
   Plus,
+  Sparkles,
   Trash2,
   Upload,
   X,
@@ -266,7 +267,6 @@ const PrescriptionViewModal = ({
     onForceClose?.();
   };
 
-  
   const [pdfFiles, setPdfFiles] = useState<File[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [uploadingPdf, setUploadingPdf] = useState(false);
@@ -274,12 +274,37 @@ const PrescriptionViewModal = ({
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
   const [pdfUploadProgress, setPdfUploadProgress] = useState<Record<string, number>>({});
 
-  
   const [lightboxDoc, setLightboxDoc] = useState<LightboxDoc | null>(null);
+
+  const [summary, setSummary] = useState<string>(appointment.documentSummary ?? "");
+  const [summarizing, setSummarizing] = useState(false);
+  const [summaryError, setSummaryError] = useState("");
 
   const { fetchAppointmentById } = useAppointmentStore();
 
-  
+  useEffect(() => {
+    setSummary(appointment.documentSummary ?? "");
+  }, [appointment.documentSummary]);
+
+  const requestSummary = async (force = false) => {
+    if (!force && summary) return;
+    setSummarizing(true);
+    setSummaryError("");
+    try {
+      const endpoint = `/appointments/${appointment._id}/summarize${force ? "?force=true" : ""}`;
+      const res = await postWithAuth(endpoint, {});
+      const data = res as any;
+      const text = data?.summary ?? data?.data?.summary ?? "";
+      setSummary(text);
+      fetchAppointmentById(appointment._id);
+    } catch (err: any) {
+      setSummaryError(err.message ?? "Could not generate summary. Please try again.");
+    } finally {
+      setSummarizing(false);
+    }
+  };
+
+
   const { startUpload: startPdfUpload, isUploading: utUploading } = useUploadThing(
     "prescriptionPdf",
     {
@@ -553,6 +578,90 @@ const PrescriptionViewModal = ({
                 <div className="text-center py-10 text-gray-400">
                   <FileText className="w-10 h-10 mx-auto mb-2 opacity-30" />
                   <p className="text-sm">No prescription or documents yet.</p>
+                </div>
+              )}
+
+              {userType === "patient" && documents.length > 0 && (
+                <div className="border-t pt-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-purple-500" />
+                      AI Document Summary
+                    </h3>
+                    {summary && (
+                      <span className="text-xs text-green-600 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full">
+                        ✓ Saved
+                      </span>
+                    )}
+                  </div>
+
+                  {!summary && !summarizing && (
+                    <div className="flex flex-col items-start gap-2 p-4 border border-dashed border-purple-200 rounded-xl bg-purple-50/30">
+                      <p className="text-sm text-gray-600">
+                        Get a plain-English explanation of all attached documents — prescriptions, lab reports, and images — in one click.
+                      </p>
+                      <Button
+                        onClick={() => requestSummary(false)}
+                        className="bg-purple-600 hover:bg-purple-700 gap-2 mt-1"
+                        size="sm"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Summarise Documents
+                      </Button>
+                    </div>
+                  )}
+
+                  {summarizing && (
+                    <div className="p-4 border border-purple-100 rounded-xl bg-purple-50/40 space-y-2">
+                      <div className="flex items-center gap-2 text-purple-700 text-sm font-medium">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Reading your documents…
+                      </div>
+                      <div className="space-y-1.5">
+                        {[80, 60, 72, 50].map((w, i) => (
+                          <div
+                            key={i}
+                            className="h-3 bg-purple-100 rounded-full animate-pulse"
+                            style={{ width: `${w}%` }}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-400">This may take a few seconds…</p>
+                    </div>
+                  )}
+
+                  {summaryError && (
+                    <div className="p-3 border border-red-200 bg-red-50 rounded-xl text-sm text-red-600 flex items-start gap-2">
+                      <X className="w-4 h-4 shrink-0 mt-0.5" />
+                      {summaryError}
+                      <button
+                        onClick={() => { setSummaryError(""); }}
+                        className="ml-auto text-xs underline"
+                        type="button"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  )}
+
+                  {summary && (
+                    <div className="p-4 border border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs text-purple-700 font-semibold mb-2">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        AI Summary
+                      </div>
+                      <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                        {summary}
+                      </div>
+                      <button
+                        onClick={() => { setSummary(""); requestSummary(true); }}
+                        className="text-xs text-purple-500 hover:text-purple-700 underline mt-1"
+                        type="button"
+                      >
+                        Regenerate
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
