@@ -11,7 +11,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import React, { ChangeEvent, useEffect, useState } from "react";
+import React, { ChangeEvent, useEffect, useState, useRef } from "react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import Header from "../landing/Header";
@@ -31,14 +31,47 @@ import FloatingChatWidget from "../shared/FloatingChatWidget";
 import { Textarea } from "../ui/textarea";
 import { Badge } from "../ui/badge";
 import { Checkbox } from "../ui/checkbox";
+import ImageCropperModal from './ImageCropperModal';
+
 
 interface ProfileProps {
   userType: "doctor" | "patient";
 }
 const ProfilePage = ({ userType }: ProfileProps) => {
-  const { user, fetchProfile, updateProfile, loading } = userAuthStore();
+  const { user, fetchProfile, updateProfile, loading, uploadProfilePicture } = userAuthStore();
   const [activeSection, setActiveSection] = useState("about");
   const [isEditing, setIsEditing] = useState(false);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        setSelectedImageSrc(reader.result?.toString() || '');
+        setIsCropperOpen(true);
+      });
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+  };
+
+  const handleCropComplete = async (blob: Blob) => {
+    setIsCropperOpen(false);
+    setIsUploadingImage(true);
+    try {
+      const file = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
+      if(uploadProfilePicture) await uploadProfilePicture(file);
+    } catch (error) {
+      console.error('Failed to upload profile picture', error);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
 
   const [formData, setFormData] = useState<any>({
     name: "",
@@ -764,12 +797,34 @@ const ProfilePage = ({ userType }: ProfileProps) => {
 
           <div className="flex items-center space-x-8 mb-8">
             <div className="flex flex-col items-center">
-              <Avatar className="w-24 h-24">
-                <AvatarImage src={user?.profileImage} alt={user?.name} />
-                <AvatarFallback className="bg-green-100 text-green-600 text-2xl font-bold">
-                  {user?.name?.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <div 
+                className="relative cursor-pointer group" 
+                onClick={() => !isUploadingImage && fileInputRef.current?.click()}
+              >
+                <Avatar className={`w-24 h-24 transition-opacity ${isUploadingImage ? 'opacity-50' : 'group-hover:opacity-80'}`}>
+                  <AvatarImage src={user?.profileImage} alt={user?.name} />
+                  <AvatarFallback className="bg-green-100 text-green-600 text-2xl font-bold">
+                    {user?.name?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                {isUploadingImage && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+                {!isUploadingImage && (
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/30 rounded-full transition-opacity">
+                    <Plus className="w-6 h-6 text-white" />
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/jpeg, image/png, image/webp" 
+                  onChange={handleFileChange}
+                />
+              </div>
               <p className="mt-2 text-lg font-semibold">{user?.name}</p>
             </div>
           </div>
@@ -828,9 +883,19 @@ const ProfilePage = ({ userType }: ProfileProps) => {
           </div>
         </div>
       </div>
+      
+      <ImageCropperModal 
+        isOpen={isCropperOpen} 
+        onClose={() => setIsCropperOpen(false)} 
+        imageSrc={selectedImageSrc} 
+        onCropComplete={handleCropComplete} 
+      />
       <FloatingChatWidget />
     </>
+
   );
 };
 
 export default ProfilePage;
+
+

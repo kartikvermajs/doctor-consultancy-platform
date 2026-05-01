@@ -1,5 +1,5 @@
 import { User } from "@/lib/types";
-import { getWithAuth, postWithAuth, postWithoutAuth, putWithAuth } from "@/service/httpService";
+import { getWithAuth, postWithAuth, postWithoutAuth, putWithAuth, postFormWithAuth } from "@/service/httpService";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -22,6 +22,7 @@ interface AuthState {
   registerPatient: (data: any) => Promise<void>;
   fetchProfile: () => Promise<User | null>;
   updateProfile: (data: any) => Promise<void>;
+  uploadProfilePicture: (file: File) => Promise<void>;
 }
 
 export const userAuthStore = create<AuthState>()(
@@ -144,6 +145,24 @@ export const userAuthStore = create<AuthState>()(
         } finally {
             set({ loading: false });
         }
+    },
+
+    uploadProfilePicture: async (file: File) => {
+        set({ loading: true, error: null });
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            const response = await postFormWithAuth('/auth/profile-picture', formData);
+            const { user } = get();
+            if (user) {
+                set({ user: { ...user, profileImage: response.data.profileImage } });
+            }
+        } catch (error: any) {
+             set({ error: error.message });
+             throw error;
+        } finally {
+            set({ loading: false });
+        }
     }
    }),{
     name:"auth-storage", 
@@ -154,3 +173,5 @@ export const userAuthStore = create<AuthState>()(
     })
    })
 );
+
+

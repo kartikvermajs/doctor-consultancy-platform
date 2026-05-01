@@ -6,6 +6,8 @@ const Patient = require('../modal/Patient')
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
+const { authenticate } = require('../middleware/auth');
+const profilePictureUpload = require('../middleware/profilePictureUpload');
 
 const router = express.Router();
 
@@ -103,6 +105,35 @@ router.post('/doctor/register',
 
  
 
+
+ 
+ router.post('/profile-picture', authenticate, profilePictureUpload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.badRequest("No image uploaded");
+        }
+
+        const imageUrl = req.file.path;
+        const { id, type } = req.auth;
+
+        let updatedUser;
+        if (type === 'doctor') {
+            updatedUser = await Doctor.findByIdAndUpdate(id, { profileImage: imageUrl }, { new: true }).select("-password -googleId");
+        } else if (type === 'patient') {
+            updatedUser = await Patient.findByIdAndUpdate(id, { profileImage: imageUrl }, { new: true }).select("-password -googleId");
+        } else {
+            return res.badRequest("Invalid user type");
+        }
+
+        if (!updatedUser) {
+            return res.notFound("User not found");
+        }
+
+        res.ok({ profileImage: imageUrl, user: updatedUser }, "Profile picture updated successfully");
+    } catch (error) {
+        res.serverError("Failed to update profile picture", [error.message]);
+    }
+ });
 
  router.get('/google', (req,res,next) => {
     const userType = req.query.type || 'patient';

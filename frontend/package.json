@@ -27,9 +27,11 @@
     "framer-motion": "^12.23.13",
     "lucide-react": "^0.542.0",
     "next": "^16.1.6",
+    "radix-ui": "^1.4.3",
     "react": "19.1.0",
     "react-day-picker": "^9.9.0",
     "react-dom": "19.1.0",
+    "react-image-crop": "^11.0.10",
     "tailwind-merge": "^3.3.1",
     "uploadthing": "^7.7.4",
     "zustand": "^5.0.8"
