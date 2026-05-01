@@ -48,6 +48,8 @@ interface PrescriptionViewModalProps {
   appointment: Appointment;
   userType: "doctor" | "patient";
   trigger: React.ReactNode;
+  _forceOpen?: boolean;
+  onForceClose?: () => void;
 }
 
 interface LightboxDoc {
@@ -249,9 +251,20 @@ const PrescriptionViewModal = ({
   appointment,
   userType,
   trigger,
+  _forceOpen,
+  onForceClose,
 }: PrescriptionViewModalProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(_forceOpen ?? false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (_forceOpen !== undefined) setIsOpen(_forceOpen);
+  }, [_forceOpen]);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    onForceClose?.();
+  };
 
   
   const [pdfFiles, setPdfFiles] = useState<File[]>([]);
@@ -398,7 +411,10 @@ const PrescriptionViewModal = ({
 
       {}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
+      >
           <Card className="w-full max-w-4xl max-h-[92vh] overflow-y-auto shadow-2xl border-0">
             {}
             <CardHeader className="flex flex-row justify-between items-center border-b bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-xl">
@@ -443,7 +459,7 @@ const PrescriptionViewModal = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleClose}
                 >
                   <X className="w-4 h-4" />
                 </Button>

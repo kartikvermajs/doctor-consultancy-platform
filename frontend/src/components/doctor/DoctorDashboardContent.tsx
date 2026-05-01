@@ -21,6 +21,7 @@ import {
   Video,
 } from "lucide-react";
 import PrescriptionModal from "./PrescriptionModal";
+import PrescriptionViewModal from "./PrescriptionViewModal";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Link from "next/link";
 import { Button } from "../ui/button";
@@ -43,6 +44,9 @@ const DoctorDashboardContent = () => {
     string | null
   >(null);
   const [modalLoading, setModalLoading] = useState(false);
+
+  const [reviewAppointment, setReviewAppointment] = useState<any | null>(null);
+
   const { endConsultation, fetchAppointmentById, currentAppointment } =
     useAppointmentStore();
 
@@ -503,13 +507,18 @@ const DoctorDashboardContent = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {dashboardData.recentReviews.map((review: any) => (
-                      <Link
-                        key={review._id}
-                        href={`/doctor/appointments?highlight=${review.appointmentId?._id ?? review.appointmentId}`}
-                        className="block"
-                      >
-                        <div className="flex gap-3 p-3 border rounded-xl hover:bg-yellow-50/60 hover:border-yellow-200 transition-colors cursor-pointer group">
+                    {dashboardData.recentReviews.map((review: any) => {
+                      const appointmentId =
+                        review.appointmentId?._id ?? review.appointmentId;
+                      return (
+                        <div
+                          key={review._id}
+                          className="flex gap-3 p-3 border rounded-xl hover:bg-yellow-50/60 hover:border-yellow-200 transition-colors cursor-pointer group"
+                          onClick={async () => {
+                            const apt = await fetchAppointmentById(appointmentId);
+                            if (apt) setReviewAppointment(apt);
+                          }}
+                        >
                           <Avatar className="w-9 h-9 shrink-0">
                             <AvatarImage src={review.patientId?.profileImage} />
                             <AvatarFallback className="bg-green-100 text-green-700 text-xs font-semibold">
@@ -548,8 +557,8 @@ const DoctorDashboardContent = () => {
                             </p>
                           </div>
                         </div>
-                      </Link>
-                    ))}
+                      );
+                    })}
                   </CardContent>
                 </Card>
               )}
@@ -564,6 +573,17 @@ const DoctorDashboardContent = () => {
         onSave={handleSavePrescription}
         patientName={patientName}
       />
+
+      {reviewAppointment && (
+        <PrescriptionViewModal
+          appointment={reviewAppointment}
+          userType="doctor"
+          trigger={<span />}
+          _forceOpen
+          onForceClose={() => setReviewAppointment(null)}
+        />
+      )}
+
       <FloatingChatWidget />
     </>
   );
