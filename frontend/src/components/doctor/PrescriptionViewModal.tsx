@@ -1,260 +1,273 @@
-// "use client";
-
-// import React, { useState } from "react";
-// import { Appointment, useAppointmentStore } from "@/store/appointmentStore";
-// import { UploadButton } from "@/lib/uploadthing";
-// import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-// import { Check, Copy, FileText, Trash2, X, Plus } from "lucide-react";
-// import { Button } from "../ui/button";
-
-// interface PrescriptionViewModalProps {
-//   appointment: Appointment;
-//   userType: "doctor" | "patient";
-//   trigger: React.ReactNode;
-// }
-
-// const PrescriptionViewModal = ({
-//   appointment,
-//   userType,
-//   trigger,
-// }: PrescriptionViewModalProps) => {
-//   const [isOpen, setIsOpen] = useState(false);
-//   const [copied, setCopied] = useState(false);
-
-//   const { uploadDocuments, deleteDocument } = useAppointmentStore();
-
-//   const openModal = () => setIsOpen(true);
-//   const closeModal = () => setIsOpen(false);
-
-//   const formatDate = (date: string) =>
-//     new Date(date).toLocaleDateString("en-US", {
-//       year: "numeric",
-//       month: "short",
-//       day: "numeric",
-//     });
-
-//   const copyToClipboard = async (text?: string) => {
-//     if (!text) return;
-//     await navigator.clipboard.writeText(text);
-//     setCopied(true);
-//     setTimeout(() => setCopied(false), 2000);
-//   };
-
-//   const otherUser =
-//     userType === "doctor" ? appointment.patientId : appointment.doctorId;
-
-//   const documents = appointment.documents ?? [];
-
-//   return (
-//     <>
-//       <span onClick={openModal} className="cursor-pointer">
-//         {trigger}
-//       </span>
-
-//       {isOpen && (
-//         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-//           <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-//             {/* ---------- HEADER ---------- */}
-//             <CardHeader className="flex flex-row justify-between items-center">
-//               <div className="flex items-center gap-2">
-//                 <FileText className="w-5 h-5 text-green-600" />
-//                 <CardTitle>Prescription & Reports</CardTitle>
-//               </div>
-
-//               <div className="flex gap-2">
-//                 {appointment.prescriptionText && (
-//                   <Button
-//                     variant="outline"
-//                     size="sm"
-//                     onClick={() =>
-//                       copyToClipboard(appointment.prescriptionText)
-//                     }
-//                   >
-//                     {copied ? (
-//                       <>
-//                         <Check className="w-4 h-4 mr-1" />
-//                         Copied
-//                       </>
-//                     ) : (
-//                       <>
-//                         <Copy className="w-4 h-4 mr-1" />
-//                         Copy
-//                       </>
-//                     )}
-//                   </Button>
-//                 )}
-
-//                 <Button variant="ghost" size="sm" onClick={closeModal}>
-//                   <X className="w-4 h-4" />
-//                 </Button>
-//               </div>
-//             </CardHeader>
-
-//             {/* ---------- CONTENT ---------- */}
-//             <CardContent className="space-y-6">
-//               {/* Meta */}
-//               <div className="flex justify-between">
-//                 <div>
-//                   <p className="font-semibold">{otherUser?.name}</p>
-//                   <p className="text-sm text-gray-600">
-//                     {userType === "patient"
-//                       ? otherUser?.specialization
-//                       : `Age: ${otherUser?.age}`}
-//                   </p>
-//                 </div>
-//                 <div className="text-right text-sm text-gray-600">
-//                   <p>{formatDate(appointment.slotStartIso)}</p>
-//                   <p>{appointment.consultationType}</p>
-//                 </div>
-//               </div>
-
-//               {/* Prescription text */}
-//               {appointment.prescriptionText && (
-//                 <div className="border border-green-200 bg-green-50 p-4 rounded">
-//                   <h3 className="font-semibold mb-2">Prescription</h3>
-//                   <pre className="bg-white p-3 rounded border text-sm whitespace-pre-wrap font-mono">
-//                     {appointment.prescriptionText}
-//                   </pre>
-//                 </div>
-//               )}
-
-//               {/* Notes */}
-//               {appointment.notes && (
-//                 <div className="border bg-gray-50 p-4 rounded">
-//                   <h3 className="font-semibold mb-2">Notes</h3>
-//                   <p className="text-sm whitespace-pre-wrap">
-//                     {appointment.notes}
-//                   </p>
-//                 </div>
-//               )}
-
-//               {/* Documents preview */}
-//               {documents.length > 0 && (
-//                 <div>
-//                   <h3 className="font-semibold mb-2">Attached Documents</h3>
-
-//                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-//                     {documents.map((doc) => (
-//                       <div
-//                         key={doc.key}
-//                         className="relative border rounded p-2 group"
-//                       >
-//                         <a
-//                           href={doc.url}
-//                           target="_blank"
-//                           rel="noopener noreferrer"
-//                         >
-//                           {doc.url.endsWith(".pdf") ? (
-//                             <div className="flex flex-col items-center justify-center h-24">
-//                               <FileText className="w-8 h-8 text-red-600" />
-//                               <span className="text-xs mt-1">PDF</span>
-//                             </div>
-//                           ) : (
-//                             <img
-//                               src={doc.url}
-//                               alt="document"
-//                               className="w-full h-24 object-cover rounded"
-//                             />
-//                           )}
-//                         </a>
-
-//                         {/* Delete – doctor only */}
-//                         {userType === "doctor" && (
-//                           <Button
-//                             size="icon"
-//                             variant="destructive"
-//                             className="absolute top-1 right-1 opacity-0 group-hover:opacity-100"
-//                             onClick={() =>
-//                               deleteDocument(appointment._id, doc.key)
-//                             }
-//                           >
-//                             <Trash2 className="w-4 h-4" />
-//                           </Button>
-//                         )}
-//                       </div>
-//                     ))}
-//                   </div>
-//                 </div>
-//               )}
-
-//               {/* Add documents later – doctor only */}
-//               {userType === "doctor" && (
-//                 <div className="border-t pt-4">
-//                   <h3 className="font-semibold mb-2 flex items-center gap-2">
-//                     <Plus className="w-4 h-4" />
-//                     Add More Documents
-//                   </h3>
-
-//                   <UploadButton
-//                     endpoint="medicalDocuments"
-//                     headers={{
-//                       Authorization: `Bearer ${localStorage.getItem("token")}`,
-//                     }}
-//                     appearance={{
-//                       button:
-//                         "w-full flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50",
-//                       allowedContent: "hidden",
-//                     }}
-//                     content={{
-//                       button: (
-//                         <>
-//                           <Plus className="w-4 h-4 mr-2" />
-//                           Upload documents
-//                         </>
-//                       ),
-//                     }}
-//                     onClientUploadComplete={(res) => {
-//                       if (!res?.length) return;
-
-//                       uploadDocuments(
-//                         appointment._id,
-//                         res.map((f) => ({
-//                           url: f.url,
-//                           key: f.key,
-//                           type: "other",
-//                         })),
-//                       );
-//                     }}
-//                     onUploadError={(error) => {
-//                       console.error("Upload failed", error);
-//                       alert("Upload failed");
-//                     }}
-//                   />
-//                 </div>
-//               )}
-//             </CardContent>
-//           </Card>
-//         </div>
-//       )}
-//     </>
-//   );
-// };
-
-// export default PrescriptionViewModal;
-
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Appointment, useAppointmentStore } from "@/store/appointmentStore";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import {
   Check,
   Copy,
+  Download,
+  Eye,
   FileText,
-  Trash2,
-  X,
-  Plus,
   Loader2,
+  Plus,
+  Trash2,
   Upload,
+  X,
 } from "lucide-react";
 import { Button } from "../ui/button";
-import { postFormWithAuth } from "@/service/httpService";
+import { postFormWithAuth, deleteWithAuth } from "@/service/httpService";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────────────────────────────────────── */
+
+/** Detect PDF either from stored mimetype or from Cloudinary raw-upload URL */
+const isPdf = (mimetype?: string, url?: string): boolean => {
+  if (mimetype) return mimetype === "application/pdf";
+  // Cloudinary raw uploads contain "/raw/upload/" in the URL
+  return url?.includes("/raw/upload/") ?? false;
+};
+
+/** Build a forced-download URL.
+ *  For Cloudinary: append `fl_attachment` transformation flag.
+ *  For generic URLs: just return as-is (browser download attribute will handle it).
+ */
+const buildDownloadUrl = (url: string): string => {
+  if (url.includes("cloudinary.com")) {
+    // Insert fl_attachment after /upload/ in the URL
+    return url.replace("/upload/", "/upload/fl_attachment/");
+  }
+  return url;
+};
+
+/** Extract a human-readable filename from Cloudinary URL or key */
+const getFilename = (url: string, key?: string): string => {
+  try {
+    const raw = key ?? decodeURIComponent(new URL(url).pathname.split("/").pop() ?? "document");
+    // Strip timestamp prefix (e.g. "1714556123456-myfile.pdf" → "myfile.pdf")
+    return raw.replace(/^\d+-/, "");
+  } catch {
+    return "document";
+  }
+};
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TYPES
+───────────────────────────────────────────────────────────────────────────── */
 
 interface PrescriptionViewModalProps {
   appointment: Appointment;
   userType: "doctor" | "patient";
   trigger: React.ReactNode;
 }
+
+interface LightboxDoc {
+  url: string;
+  key: string;
+  mimetype?: string;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   LIGHTBOX
+───────────────────────────────────────────────────────────────────────────── */
+
+const Lightbox = ({
+  doc,
+  onClose,
+}: {
+  doc: LightboxDoc;
+  onClose: () => void;
+}) => {
+  const isDocPdf = isPdf(doc.mimetype, doc.url);
+  const filename = getFilename(doc.url, doc.key);
+
+  // Close on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex flex-col bg-black/90 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      {/* Toolbar */}
+      <div
+        className="flex items-center justify-between px-6 py-3 bg-black/60 shrink-0"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <span className="text-white text-sm font-medium truncate max-w-xs">
+          {filename}
+        </span>
+        <div className="flex items-center gap-2">
+          <a
+            href={buildDownloadUrl(doc.url)}
+            download={filename}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-white/30 text-white bg-white/10 hover:bg-white/20"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download
+            </Button>
+          </a>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-white hover:bg-white/20"
+            onClick={onClose}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div
+        className="flex-1 flex items-center justify-center overflow-hidden p-4"
+        onClick={onClose}
+      >
+        {isDocPdf ? (
+          <iframe
+            src={doc.url}
+            title={filename}
+            className="w-full max-w-4xl h-full rounded-lg border border-white/10 bg-white"
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={doc.url}
+            alt={filename}
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DOCUMENT CARD
+───────────────────────────────────────────────────────────────────────────── */
+
+const DocCard = ({
+  doc,
+  userType,
+  deleting,
+  onPreview,
+  onDelete,
+}: {
+  doc: { url: string; key: string; mimetype?: string; type: string };
+  userType: "doctor" | "patient";
+  deleting: boolean;
+  onPreview: () => void;
+  onDelete: () => void;
+}) => {
+  const docIsPdf = isPdf(doc.mimetype, doc.url);
+  const filename = getFilename(doc.url, doc.key);
+  const downloadUrl = buildDownloadUrl(doc.url);
+
+  return (
+    <div className="group relative flex flex-col border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all duration-200">
+      {/* Thumbnail / Preview area */}
+      <div
+        className="relative h-32 bg-gray-50 flex items-center justify-center cursor-pointer overflow-hidden"
+        onClick={onPreview}
+        title="Click to preview"
+      >
+        {docIsPdf ? (
+          <div className="flex flex-col items-center gap-2 text-red-500">
+            <FileText className="w-10 h-10" />
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              PDF
+            </span>
+          </div>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={doc.url}
+            alt={filename}
+            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+          />
+        )}
+
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+          <Eye className="w-7 h-7 text-white drop-shadow" />
+        </div>
+      </div>
+
+      {/* Filename */}
+      <div className="px-3 py-2 flex-1 min-w-0">
+        <p className="text-xs text-gray-600 truncate" title={filename}>
+          {filename}
+        </p>
+      </div>
+
+      {/* Actions */}
+      <div className="px-3 pb-3 flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-1 text-xs h-7 gap-1"
+          onClick={onPreview}
+        >
+          <Eye className="w-3 h-3" />
+          Preview
+        </Button>
+
+        <a
+          href={downloadUrl}
+          download={filename}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1"
+        >
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full text-xs h-7 gap-1 text-blue-600 border-blue-200 hover:bg-blue-50"
+          >
+            <Download className="w-3 h-3" />
+            Download
+          </Button>
+        </a>
+
+        {/* Doctor-only delete */}
+        {userType === "doctor" && (
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50"
+            onClick={onDelete}
+            disabled={deleting}
+            title="Delete document"
+          >
+            {deleting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="w-3.5 h-3.5" />
+            )}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MAIN MODAL
+───────────────────────────────────────────────────────────────────────────── */
 
 const PrescriptionViewModal = ({
   appointment,
@@ -269,13 +282,16 @@ const PrescriptionViewModal = ({
   const [uploading, setUploading] = useState(false);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
+  /* lightbox */
+  const [lightboxDoc, setLightboxDoc] = useState<LightboxDoc | null>(null);
+
   const { fetchAppointmentById } = useAppointmentStore();
 
   const documents = appointment.documents ?? [];
   const otherUser =
     userType === "doctor" ? appointment.patientId : appointment.doctorId;
 
-  /* ---------------- helpers ---------------- */
+  /* ── helpers ── */
 
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("en-US", {
@@ -295,33 +311,19 @@ const PrescriptionViewModal = ({
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  /* ---------------- upload ---------------- */
+  const closeLightbox = useCallback(() => setLightboxDoc(null), []);
+
+  /* ── upload ── */
 
   const submitUpload = async () => {
     if (!files.length) return;
-
-    console.group("[UPLOAD]");
-    console.log("Starting upload");
-    console.log("Files selected:", files.length);
 
     const form = new FormData();
     files.forEach((file) => form.append("documents", file));
 
     setUploading(true);
     try {
-      console.log(
-        "Sending request to:",
-        `/appointments/${appointment._id}/documents`,
-      );
-
-      await postFormWithAuth(
-        `/appointments/${appointment._id}/documents`,
-        form,
-      );
-
-      console.log("Upload completed successfully");
-      console.log("Refreshing appointment data");
-
+      await postFormWithAuth(`/appointments/${appointment._id}/documents`, form);
       setFiles([]);
       await fetchAppointmentById(appointment._id);
     } catch (err) {
@@ -329,11 +331,10 @@ const PrescriptionViewModal = ({
       alert("Upload failed. Please try again.");
     } finally {
       setUploading(false);
-      console.groupEnd();
     }
   };
 
-  /* ---------------- delete ---------------- */
+  /* ── delete ── */
 
   const confirmDelete = async (key: string) => {
     const ok = confirm("Delete this document permanently?");
@@ -341,129 +342,197 @@ const PrescriptionViewModal = ({
 
     setDeletingKey(key);
     try {
-      await postFormWithAuth(
-        `/appointments/${appointment._id}/documents/${key}`,
-        new FormData(),
-      );
+      await deleteWithAuth(`/appointments/${appointment._id}/documents/${key}`);
       await fetchAppointmentById(appointment._id);
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Delete failed. Please try again.");
     } finally {
       setDeletingKey(null);
     }
   };
 
-  /* ---------------- previews ---------------- */
+  /* ── local previews for selected-but-not-yet-uploaded files ── */
 
-  const previews = files.map((file) => ({
+  const localPreviews = files.map((file) => ({
     file,
-    preview: file.type === "application/pdf" ? null : URL.createObjectURL(file),
+    preview:
+      file.type === "application/pdf" ? null : URL.createObjectURL(file),
+    isLocalPdf: file.type === "application/pdf",
   }));
 
-  /* ---------------- render ---------------- */
+  /* ── render ── */
 
   return (
     <>
+      {/* Trigger */}
       <span onClick={() => setIsOpen(true)} className="cursor-pointer">
         {trigger}
       </span>
 
+      {/* Lightbox (rendered outside the modal Card so it covers everything) */}
+      {lightboxDoc && <Lightbox doc={lightboxDoc} onClose={closeLightbox} />}
+
+      {/* Modal */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <CardHeader className="flex flex-row justify-between items-center">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-green-600" />
-                <CardTitle>Prescription & Reports</CardTitle>
-              </div>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsOpen(false)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </CardHeader>
-
-            <CardContent className="space-y-6">
-              {/* Meta */}
-              <div className="flex justify-between">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-4xl max-h-[92vh] overflow-y-auto shadow-2xl border-0">
+            {/* ── Header ── */}
+            <CardHeader className="flex flex-row justify-between items-center border-b bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-xl">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <FileText className="w-5 h-5 text-green-600" />
+                </div>
                 <div>
-                  <p className="font-semibold">{otherUser?.name}</p>
-                  <p className="text-sm text-gray-600">
-                    {userType === "patient"
-                      ? otherUser?.specialization
-                      : `Age: ${otherUser?.age}`}
+                  <CardTitle className="text-lg">
+                    Prescription &amp; Documents
+                  </CardTitle>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {formatDate(appointment.slotStartIso)} ·{" "}
+                    {appointment.consultationType}
                   </p>
                 </div>
-                <div className="text-right text-sm text-gray-600">
+              </div>
+
+              <div className="flex gap-2">
+                {appointment.prescriptionText && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      copyToClipboard(appointment.prescriptionText)
+                    }
+                    className="gap-1"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-green-600" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        Copy Rx
+                      </>
+                    )}
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-6 pt-6">
+              {/* ── Patient / Doctor meta ── */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    {otherUser?.name}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {userType === "patient"
+                      ? otherUser?.specialization
+                      : `Age: ${otherUser?.age ?? "—"}`}
+                  </p>
+                </div>
+                <div className="text-right text-sm text-gray-500">
                   <p>{formatDate(appointment.slotStartIso)}</p>
                   <p>{appointment.consultationType}</p>
                 </div>
               </div>
 
-              {/* Prescription */}
+              {/* ── Prescription text ── */}
               {appointment.prescriptionText && (
-                <div className="border border-green-200 bg-green-50 p-4 rounded">
-                  <h3 className="font-semibold mb-2">Prescription</h3>
-                  <pre className="bg-white p-3 rounded border text-sm whitespace-pre-wrap font-mono">
+                <div className="border border-green-200 bg-green-50 rounded-xl overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-green-100/70 border-b border-green-200">
+                    <FileText className="w-4 h-4 text-green-700" />
+                    <h3 className="font-semibold text-green-900 text-sm">
+                      Prescription
+                    </h3>
+                  </div>
+                  <pre className="p-4 text-sm whitespace-pre-wrap font-mono text-gray-800 bg-white/60">
                     {appointment.prescriptionText}
                   </pre>
                 </div>
               )}
 
-              {/* Notes */}
+              {/* ── Notes ── */}
               {appointment.notes && (
-                <div className="border bg-gray-50 p-4 rounded">
-                  <h3 className="font-semibold mb-2">Notes</h3>
-                  <p className="text-sm whitespace-pre-wrap">
+                <div className="border border-gray-200 bg-gray-50 rounded-xl overflow-hidden">
+                  <div className="px-4 py-2 bg-gray-100 border-b border-gray-200">
+                    <h3 className="font-semibold text-gray-700 text-sm">
+                      Doctor&apos;s Notes
+                    </h3>
+                  </div>
+                  <p className="p-4 text-sm whitespace-pre-wrap text-gray-700">
                     {appointment.notes}
                   </p>
                 </div>
               )}
 
-              {/* Existing documents */}
+              {/* ── Existing documents ── */}
               {documents.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-2">Attached Documents</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-gray-500" />
+                      Attached Documents
+                      <span className="text-xs font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                        {documents.length}
+                      </span>
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {documents.map((doc) => (
-                      <a
+                      <DocCard
                         key={doc.key}
-                        href={doc.url}
-                        target="_blank"
-                        className="border rounded p-2 hover:bg-gray-50 transition"
-                      >
-                        {doc.url.endsWith(".pdf") ? (
-                          <div className="flex flex-col items-center h-24 justify-center">
-                            <FileText className="w-8 h-8 text-red-600" />
-                            <span className="text-xs mt-1">PDF</span>
-                          </div>
-                        ) : (
-                          <img
-                            src={doc.url}
-                            className="w-full h-24 object-cover rounded"
-                          />
-                        )}
-                      </a>
+                        doc={doc}
+                        userType={userType}
+                        deleting={deletingKey === doc.key}
+                        onPreview={() =>
+                          setLightboxDoc({
+                            url: doc.url,
+                            key: doc.key,
+                            mimetype: doc.mimetype,
+                          })
+                        }
+                        onDelete={() => confirmDelete(doc.key)}
+                      />
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Upload section */}
+              {/* ── Empty state (no docs, no prescription) ── */}
+              {documents.length === 0 && !appointment.prescriptionText && !appointment.notes && (
+                <div className="text-center py-10 text-gray-400">
+                  <FileText className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No prescription or documents yet.</p>
+                </div>
+              )}
+
+              {/* ── Upload section (doctor only) ── */}
               {userType === "doctor" && (
-                <div className="border-t pt-4 space-y-4">
-                  <h3 className="font-semibold flex items-center gap-2">
+                <div className="border-t pt-5 space-y-4">
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                     <Plus className="w-4 h-4" />
-                    Add documents
+                    Add Documents
                   </h3>
 
                   {/* Dropzone */}
-                  <label className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-sm text-gray-600 cursor-pointer hover:border-green-500 transition">
-                    <Upload className="w-6 h-6 mb-2 text-green-600" />
-                    <span>Click to select images or PDFs</span>
+                  <label className="border-2 border-dashed border-gray-200 hover:border-green-400 rounded-xl p-6 flex flex-col items-center justify-center text-sm text-gray-500 cursor-pointer transition-colors duration-200 bg-gray-50 hover:bg-green-50/30">
+                    <Upload className="w-6 h-6 mb-2 text-green-500" />
+                    <span className="font-medium">
+                      Click to select images or PDFs
+                    </span>
                     <span className="text-xs text-gray-400 mt-1">
-                      Max 10 MB per file
+                      JPG, PNG, WEBP, PDF · Max 10 MB per file
                     </span>
                     <input
                       type="file"
@@ -477,53 +546,64 @@ const PrescriptionViewModal = ({
                     />
                   </label>
 
-                  {/* Previews */}
-                  {previews.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {previews.map(({ file, preview }, i) => (
-                        <div key={i} className="relative border rounded p-2">
-                          {preview ? (
-                            <img
-                              src={preview}
-                              className="h-24 w-full object-cover rounded"
-                            />
-                          ) : (
-                            <div className="flex flex-col items-center justify-center h-24">
-                              <FileText />
-                              <span className="text-xs">{file.name}</span>
-                            </div>
-                          )}
-
-                          <Button
-                            size="icon"
-                            variant="destructive"
-                            className="absolute top-1 right-1"
+                  {/* Local previews (selected, not yet uploaded) */}
+                  {localPreviews.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {localPreviews.map(({ file, preview, isLocalPdf }, i) => (
+                        <div
+                          key={i}
+                          className="relative border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm"
+                        >
+                          <div className="h-24 bg-gray-50 flex items-center justify-center">
+                            {isLocalPdf ? (
+                              <div className="flex flex-col items-center gap-1 text-red-500">
+                                <FileText className="w-8 h-8" />
+                                <span className="text-xs text-gray-500">PDF</span>
+                              </div>
+                            ) : (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={preview!}
+                                alt={file.name}
+                                className="w-full h-full object-cover"
+                              />
+                            )}
+                          </div>
+                          <div className="px-2 py-1">
+                            <p className="text-xs text-gray-500 truncate">
+                              {file.name}
+                            </p>
+                          </div>
+                          <button
+                            className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 transition-colors"
                             onClick={() => removeLocalFile(i)}
                             disabled={uploading}
+                            type="button"
                           >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                            <X className="w-3 h-3" />
+                          </button>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Submit */}
+                  {/* Upload button */}
                   {files.length > 0 && (
                     <Button
                       onClick={submitUpload}
                       disabled={uploading}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700 gap-2"
                     >
                       {uploading ? (
                         <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <Loader2 className="w-4 h-4 animate-spin" />
                           Uploading…
                         </>
                       ) : (
                         <>
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload Documents
+                          <Upload className="w-4 h-4" />
+                          Upload {files.length} file
+                          {files.length > 1 ? "s" : ""}
                         </>
                       )}
                     </Button>

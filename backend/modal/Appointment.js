@@ -4,6 +4,7 @@ const documentSchema = new mongoose.Schema(
   {
     url: { type: String, required: true },
     key: { type: String, required: true },
+    mimetype: { type: String, default: "" }, // e.g. "application/pdf" or "image/jpeg"
     type: {
       type: String,
       enum: ["lab-report", "prescription", "other"],

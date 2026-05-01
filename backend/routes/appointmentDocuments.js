@@ -78,6 +78,7 @@ router.post(
       const docs = req.files.map((file) => ({
         url: file.path,
         key: file.filename,
+        mimetype: file.mimetype || "",
         type: "other",
         uploadedBy: "doctor",
       }));

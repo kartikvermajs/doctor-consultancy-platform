@@ -9,6 +9,7 @@ import { create } from "zustand";
 export interface AppointmentDocument {
   url: string;
   key: string;
+  mimetype?: string;
   type: "lab-report" | "prescription" | "other";
 }
 
@@ -155,8 +156,15 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await getWithAuth(`/appointment/${appointmentId}`);
-      set({ currentAppointment: response?.data?.appointment });
-      return response?.data?.appointment;
+      const updated = response?.data?.appointment;
+      // Patch both currentAppointment AND the list so counts/docs stay in sync
+      set((state) => ({
+        currentAppointment: updated,
+        appointments: state.appointments.map((a) =>
+          a._id === appointmentId ? { ...a, ...updated } : a,
+        ),
+      }));
+      return updated;
     } catch (error: any) {
       set({ error: error.message });
     } finally {
@@ -217,20 +225,19 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   },
 
   deleteDocument: async (appointmentId: string, key: string) => {
-    const res = await deleteWithAuth(
-      `/api/appointments/${appointmentId}/documents/${key}`,
+    await deleteWithAuth(
+      `/appointments/${appointmentId}/documents/${key}`,
     );
-
+    // Refresh from server to get latest document list
+    const res = await getWithAuth(`/appointment/${appointmentId}`);
+    const updated = res?.data?.appointment;
     set((state) => ({
       appointments: state.appointments.map((a) =>
-        a._id === appointmentId ? { ...a, documents: res.data } : a,
+        a._id === appointmentId ? { ...a, ...updated } : a,
       ),
       currentAppointment:
         state.currentAppointment?._id === appointmentId
-          ? {
-              ...state.currentAppointment,
-              documents: res.data,
-            }
+          ? { ...state.currentAppointment, ...updated }
           : state.currentAppointment,
     }));
   },

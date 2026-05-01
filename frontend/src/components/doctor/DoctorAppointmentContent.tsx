@@ -175,7 +175,8 @@ const DoctorAppointmentContent = () => {
                 </Button>
               )}
 
-              {appointment.status === "Completed" &&
+              {(appointment.status === "Completed" ||
+                appointment.status === "In Progress") &&
                 (appointment.prescriptionText ||
                   (appointment.documents?.length ?? 0) > 0) && (
                   <PrescriptionViewModal
