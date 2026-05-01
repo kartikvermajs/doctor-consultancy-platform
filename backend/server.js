@@ -54,6 +54,7 @@ app.use("/api/appointment", require("./routes/appointment"));
 app.use("/api/payment", require("./routes/payment"));
 app.use("/api/appointments", require("./routes/appointmentDocuments"));
 app.use("/api/chat", require("./routes/chatRoutes"));
+app.use("/api/review", require("./routes/review"));
 
 app.get("/health", (req, res) =>
   res.ok({ time: new Date().toISOString() }, "OK"),

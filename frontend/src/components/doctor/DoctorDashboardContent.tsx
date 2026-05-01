@@ -12,6 +12,7 @@ import {
   Clock,
   DollarSign,
   MapPin,
+  MessageSquare,
   Phone,
   Plus,
   Star,
@@ -431,6 +432,7 @@ const DoctorDashboardContent = () => {
                 </CardContent>
               </Card>
 
+              {/* ── Performance Card — fully dynamic ── */}
               <Card className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
@@ -438,27 +440,50 @@ const DoctorDashboardContent = () => {
                     <span>Performance</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">
-                      Patient Satisfaction
-                    </span>
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold">
-                        {dashboardData?.performance?.pateintSatisfaction} / 5
-                      </span>
+                <CardContent className="space-y-5">
+                  {/* Patient Satisfaction — star visual */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Patient Satisfaction</span>
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-bold text-gray-900">
+                          {dashboardData?.performance?.patientSatisfaction
+                            ? Number(dashboardData.performance.patientSatisfaction).toFixed(1)
+                            : "—"}
+                        </span>
+                        <span className="text-xs text-gray-400">/5</span>
+                      </div>
                     </div>
+                    {/* Star bar */}
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((s) => {
+                        const val = dashboardData?.performance?.patientSatisfaction ?? 0;
+                        const filled = val >= s;
+                        const partial = !filled && val > s - 1;
+                        return (
+                          <div key={s} className="relative flex-1 h-2 rounded-full overflow-hidden bg-gray-100">
+                            <div
+                              className="absolute inset-y-0 left-0 bg-yellow-400 rounded-full"
+                              style={{ width: filled ? "100%" : partial ? `${(val - (s - 1)) * 100}%` : "0%" }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Based on {dashboardData?.performance?.totalReviews ?? 0} review
+                      {(dashboardData?.performance?.totalReviews ?? 0) !== 1 ? "s" : ""}
+                    </p>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">
-                      Completion Rate
-                    </span>
+                    <span className="text-sm text-gray-600">Completion Rate</span>
                     <span className="font-semibold text-green-600">
-                      {dashboardData?.performance?.completionRate}
+                      {dashboardData?.performance?.completionRate ?? "—"}
                     </span>
                   </div>
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Response Time</span>
                     <span className="font-semibold text-green-600">
@@ -467,6 +492,67 @@ const DoctorDashboardContent = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* ── Recent Patient Reviews ── */}
+              {dashboardData?.recentReviews?.length > 0 && (
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="flex items-center space-x-2">
+                      <MessageSquare className="w-5 h-5 text-yellow-500" />
+                      <span>Recent Reviews</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {dashboardData.recentReviews.map((review: any) => (
+                      <Link
+                        key={review._id}
+                        href={`/doctor/appointments?highlight=${review.appointmentId?._id ?? review.appointmentId}`}
+                        className="block"
+                      >
+                        <div className="flex gap-3 p-3 border rounded-xl hover:bg-yellow-50/60 hover:border-yellow-200 transition-colors cursor-pointer group">
+                          <Avatar className="w-9 h-9 shrink-0">
+                            <AvatarImage src={review.patientId?.profileImage} />
+                            <AvatarFallback className="bg-green-100 text-green-700 text-xs font-semibold">
+                              {review.patientId?.name?.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-semibold text-gray-900 group-hover:text-yellow-700 truncate">
+                                {review.patientId?.name}
+                              </p>
+                              <div className="flex gap-0.5 shrink-0">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`w-3 h-3 ${
+                                      s <= review.rating
+                                        ? "fill-yellow-400 text-yellow-400"
+                                        : "fill-gray-100 text-gray-300"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            {review.comment && (
+                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                                &ldquo;{review.comment}&rdquo;
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-400 mt-1">
+                              {new Date(review.createdAt).toLocaleDateString("en-US", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>

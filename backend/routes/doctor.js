@@ -139,6 +139,7 @@ router.get(
   requireRole("doctor"),
   async (req, res) => {
     try {
+      const Review = require("../modal/Review");
       const doctorId = req.auth.id;
       const now = new Date();
 
@@ -147,19 +148,13 @@ router.get(
         now.getFullYear(),
         now.getMonth(),
         now.getDate(),
-        0,
-        0,
-        0,
-        0
+        0, 0, 0, 0
       );
       const endOfDay = new Date(
         now.getFullYear(),
         now.getMonth(),
         now.getDate(),
-        23,
-        59,
-        59,
-        999
+        23, 59, 59, 999
       );
 
       const doctor = await Doctor.findById(doctorId)
@@ -191,25 +186,49 @@ router.get(
         .sort({ slotStartIso: 1 })
         .limit(5);
 
-      const uniquePatientIds = await Appointment.distinct("patientId", {
-        doctorId,
-      });
+      const uniquePatientIds = await Appointment.distinct("patientId", { doctorId });
       const totalPatients = uniquePatientIds.length;
 
-      const completedAppointmentCount = await Appointment.countDocuments({
-        doctorId,
-        status: "Completed",
-      });
+      const totalAppointmentCount = await Appointment.countDocuments({ doctorId, status: { $ne: "Cancelled" } });
+      const completedAppointmentCount = await Appointment.countDocuments({ doctorId, status: "Completed" });
 
-      const totalAppointment = await Appointment.find({
-        doctorId,
-        status: "Completed",
-      });
-
-      const totalRevenue = totalAppointment.reduce(
-        (sum, apt) => sum + (apt.fees || doctor.fees || 0),
+      const completedAppointments = await Appointment.find({ doctorId, status: "Completed" });
+      const totalRevenue = completedAppointments.reduce(
+        (sum, apt) => sum + (apt.consultationFees || doctor.fees || 0),
         0
       );
+
+      // ── Live review aggregation ──────────────────────────────────────────
+      const ratingAgg = await Review.aggregate([
+        { $match: { doctorId: new (require("mongoose").Types.ObjectId)(doctorId) } },
+        {
+          $group: {
+            _id: null,
+            averageRating: { $avg: "$rating" },
+            totalReviews: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const averageRating =
+        ratingAgg.length > 0
+          ? Math.round(ratingAgg[0].averageRating * 10) / 10
+          : 0;
+      const totalReviews = ratingAgg.length > 0 ? ratingAgg[0].totalReviews : 0;
+
+      // 5 most recent reviews with patient info + appointment ref
+      const recentReviews = await Review.find({ doctorId })
+        .populate("patientId", "name profileImage email")
+        .populate("appointmentId", "_id slotStartIso consultationType")
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean();
+
+      // Real completion rate
+      const completionRate =
+        totalAppointmentCount > 0
+          ? Math.round((completedAppointmentCount / totalAppointmentCount) * 100)
+          : 0;
 
       const dashboardData = {
         user: {
@@ -223,25 +242,29 @@ router.get(
           totalPatients,
           todayAppointments: todayAppointments.length,
           totalRevenue,
-          completedAppointments:completedAppointmentCount,
-          averageRating: 4.8,
+          completedAppointments: completedAppointmentCount,
+          averageRating,
+          totalReviews,
         },
         todayAppointments,
         upcomingAppointments,
+        recentReviews,
         performance: {
-          pateintSatisfaction: 4.8,
-          completionRate: 98,
+          patientSatisfaction: averageRating,
+          totalReviews,
+          completionRate: `${completionRate}%`,
           responseTime: "< 2min",
         },
       };
 
-      res.ok(dashboardData,'Dashboard data retrived')
+      res.ok(dashboardData, "Dashboard data retrieved");
     } catch (error) {
       console.error("Dashboard error", error);
       res.serverError("failed to fetch doctor dashboard", [error.message]);
     }
   }
 );
+
 
 router.get("/:doctorId", validate, async (req, res) => {
   try {

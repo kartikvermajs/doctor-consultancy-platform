@@ -306,6 +306,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { getStatusColor } from "@/lib/constant";
 import PrescriptionViewModal from "../doctor/PrescriptionViewModal";
+import ReviewModal from "./ReviewModal";
 
 type Tab = "upcoming" | "past";
 
@@ -442,6 +443,22 @@ const PatientDashboardContent = () => {
                     }
                   />
                 )}
+              {/* Rate Doctor — only on completed appointments */}
+              {appointment.status === "Completed" && (
+                <ReviewModal
+                  appointment={appointment}
+                  trigger={
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-yellow-300 text-yellow-700 hover:bg-yellow-50 gap-1"
+                    >
+                      <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                      Rate Doctor
+                    </Button>
+                  }
+                />
+              )}
             </div>
 
             {appointment.status === "Completed" && (
