@@ -280,7 +280,7 @@ const PrescriptionViewModal = ({
   const [summarizing, setSummarizing] = useState(false);
   const [summaryError, setSummaryError] = useState("");
 
-  const { fetchAppointmentById } = useAppointmentStore();
+  const { updateDocumentSummary, fetchAppointmentById } = useAppointmentStore();
 
   useEffect(() => {
     setSummary(appointment.documentSummary ?? "");
@@ -296,7 +296,7 @@ const PrescriptionViewModal = ({
       const data = res as any;
       const text = data?.summary ?? data?.data?.summary ?? "";
       setSummary(text);
-      fetchAppointmentById(appointment._id);
+      updateDocumentSummary(appointment._id, text);
     } catch (err: any) {
       setSummaryError(err.message ?? "Could not generate summary. Please try again.");
     } finally {

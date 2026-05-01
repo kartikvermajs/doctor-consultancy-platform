@@ -58,18 +58,15 @@ interface BookingData {
 }
 
 interface AppointmentState {
-  
   appointments: Appointment[];
   bookedSlots: string[];
   currentAppointment: Appointment | null;
   loading: boolean;
   error: string | null;
 
-  
   clearError: () => void;
   setCurrentAppointment: (appointment: Appointment) => void;
 
-  
   fetchAppointments: (
     role: "doctor" | "patient",
     tab?: string,
@@ -95,16 +92,17 @@ interface AppointmentState {
     status: string,
   ) => Promise<void>;
 
-  
   uploadDocuments: (
     appointmentId: string,
     files: AppointmentDocument[],
   ) => Promise<void>;
 
   deleteDocument: (appointmentId: string, key: string) => Promise<void>;
+
+  updateDocumentSummary: (appointmentId: string, summary: string) => void;
 }
 
-export const useAppointmentStore = create<AppointmentState>((set, get) => ({
+export const useAppointmentStore = create<AppointmentState>((set) => ({
   appointments: [],
   bookedSlots: [],
   currentAppointment: null,
@@ -113,14 +111,12 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
   clearError: () => set({ error: null }),
 
-  setCurrentAppointment: (appointment) =>
-    set({ currentAppointment: appointment }),
+  setCurrentAppointment: (appointment) => set({ currentAppointment: appointment }),
 
   fetchAppointments: async (role, tab = "", filters = {}) => {
     set({ loading: true, error: null });
     try {
-      const endPoint =
-        role === "doctor" ? "/appointment/doctor" : "/appointment/patient";
+      const endPoint = role === "doctor" ? "/appointment/doctor" : "/appointment/patient";
       const queryParams = new URLSearchParams();
       if (tab === "upcoming") {
         queryParams.append("status", "Scheduled");
@@ -131,12 +127,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       }
 
       Object.entries(filters).forEach(([key, value]) => {
-        if (
-          value !== undefined &&
-          value !== null &&
-          value !== "" &&
-          key !== "status"
-        ) {
+        if (value !== undefined && value !== null && value !== "" && key !== "status") {
           if (Array.isArray(value)) {
             value.forEach((v) => queryParams.append(key, v.toString()));
           } else {
@@ -144,9 +135,8 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
           }
         }
       });
-      const response = await getWithAuth(
-        `${endPoint}?${queryParams.toString()}`,
-      );
+
+      const response = await getWithAuth(`${endPoint}?${queryParams.toString()}`);
       set({ appointments: response.data || [] });
     } catch (error: any) {
       set({ error: error.message });
@@ -160,7 +150,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     try {
       const response = await getWithAuth(`/appointment/${appointmentId}`);
       const updated = response?.data?.appointment;
-      
+
       set((state) => ({
         currentAppointment: updated,
         appointments: state.appointments.map((a) =>
@@ -170,6 +160,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       return updated;
     } catch (error: any) {
       set({ error: error.message });
+      return null;
     } finally {
       set({ loading: false });
     }
@@ -178,9 +169,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   fetchBookedSlots: async (doctorId, date) => {
     set({ loading: true, error: null });
     try {
-      const response = await getWithAuth(
-        `/appointment/booked-slots/${doctorId}/${date}`,
-      );
+      const response = await getWithAuth(`/appointment/booked-slots/${doctorId}/${date}`);
       set({ bookedSlots: response?.data });
     } catch (error: any) {
       set({ error: error.message });
@@ -204,14 +193,10 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     }
   },
 
-  uploadDocuments: async (
-    appointmentId: string,
-    files: AppointmentDocument[],
-  ) => {
-    const res = await postWithAuth(
-      `/api/appointments/${appointmentId}/documents`,
-      { documents: files },
-    );
+  uploadDocuments: async (appointmentId, files) => {
+    const res = await postWithAuth(`/api/appointments/${appointmentId}/documents`, {
+      documents: files,
+    });
 
     set((state) => ({
       appointments: state.appointments.map((a) =>
@@ -219,19 +204,14 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       ),
       currentAppointment:
         state.currentAppointment?._id === appointmentId
-          ? {
-              ...state.currentAppointment,
-              documents: res.data,
-            }
+          ? { ...state.currentAppointment, documents: res.data }
           : state.currentAppointment,
     }));
   },
 
-  deleteDocument: async (appointmentId: string, key: string) => {
-    await deleteWithAuth(
-      `/appointments/${appointmentId}/documents/${key}`,
-    );
-    
+  deleteDocument: async (appointmentId, key) => {
+    await deleteWithAuth(`/appointments/${appointmentId}/documents/${key}`);
+
     const res = await getWithAuth(`/appointment/${appointmentId}`);
     const updated = res?.data?.appointment;
     set((state) => ({
@@ -274,6 +254,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       set({ loading: false });
     }
   },
+
   endConsultation: async (appointmentId, prescription, notes) => {
     set({ loading: true, error: null });
     try {
@@ -292,7 +273,6 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
             ? { ...state.currentAppointment, status: "Completed" as const }
             : state.currentAppointment,
       }));
-
       return response.data;
     } catch (error: any) {
       set({ error: error.message });
@@ -300,13 +280,11 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       set({ loading: false });
     }
   },
+
   updateAppointmentStatus: async (appointmentId, status) => {
     set({ loading: true, error: null });
     try {
-      const response = await putWithAuth(
-        `/appointment/status/${appointmentId}`,
-        { status },
-      );
+      const response = await putWithAuth(`/appointment/status/${appointmentId}`, { status });
       set((state) => ({
         appointments: state.appointments.map((apt) =>
           apt._id === appointmentId ? { ...apt, status: status as any } : apt,
@@ -316,12 +294,23 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
             ? { ...state.currentAppointment, status: status as any }
             : state.currentAppointment,
       }));
-
       return response.data;
     } catch (error: any) {
       set({ error: error.message });
     } finally {
       set({ loading: false });
     }
+  },
+
+  updateDocumentSummary: (appointmentId, summary) => {
+    set((state) => ({
+      appointments: state.appointments.map((a) =>
+        a._id === appointmentId ? { ...a, documentSummary: summary } : a,
+      ),
+      currentAppointment:
+        state.currentAppointment?._id === appointmentId
+          ? { ...state.currentAppointment, documentSummary: summary }
+          : state.currentAppointment,
+    }));
   },
 }));

@@ -76,7 +76,7 @@ const Header: React.FC<HeaderProps> = ({ showDashboardNav = false }) => {
   return (
     <header className="border-b bg-white/95 backdrop:blur-sm fixed top-0 left-0 right-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center  justify-between">
-        {}
+        { }
         <div className="flex items-center space-x-8">
           <Link href="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center">
@@ -88,18 +88,17 @@ const Header: React.FC<HeaderProps> = ({ showDashboardNav = false }) => {
             </div>
           </Link>
 
-          {}
+          { }
           {isAuthenticated && showDashboardNav && (
             <nav className="hidden md:flex items-center space-x-6">
               {getDashboardNavigation().map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center space-x-1 transition-colors ${
-                    item.active
-                      ? "text-green-600 font-semibold"
-                      : "text-gray-600 hover:text-green-600"
-                  }`}
+                  className={`flex items-center space-x-1 transition-colors ${item.active
+                    ? "text-green-600 font-semibold"
+                    : "text-gray-600 hover:text-green-600"
+                    }`}
                 >
                   <item.icon className="w-4 h-4" />
                   <span className="text-sm font-medium">{item.lable}</span>
@@ -111,12 +110,6 @@ const Header: React.FC<HeaderProps> = ({ showDashboardNav = false }) => {
 
         {isAuthenticated && showDashboardNav ? (
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="w-5 h-5" />
-              <Badge className="absolute -top-1 -right-1 w-5 h-5 text-xs bg-red-500 hover:bg-red-600">
-                4
-              </Badge>
-            </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -184,7 +177,7 @@ const Header: React.FC<HeaderProps> = ({ showDashboardNav = false }) => {
                     Settings
                   </Link>
                 </DropdownMenuItem>
-                       <DropdownMenuSeparator />
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="text-red-600"
