@@ -9,6 +9,7 @@ import {
   Download,
   Eye,
   FileText,
+  Image as ImageIcon,
   Loader2,
   Plus,
   Trash2,
@@ -16,7 +17,8 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "../ui/button";
-import { postFormWithAuth, deleteWithAuth } from "@/service/httpService";
+import { postFormWithAuth, deleteWithAuth, postWithAuth } from "@/service/httpService";
+import { useUploadThing } from "@/lib/uploadthing";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    HELPERS
@@ -31,13 +33,15 @@ const isPdf = (mimetype?: string, url?: string): boolean => {
 
 /** Build a forced-download URL.
  *  For Cloudinary: append `fl_attachment` transformation flag.
- *  For generic URLs: just return as-is (browser download attribute will handle it).
+ *  For UploadThing (ufs.sh / uploadthing.com): return as-is — they serve with
+ *  proper Content-Disposition headers natively.
+ *  For generic URLs: return as-is.
  */
 const buildDownloadUrl = (url: string): string => {
   if (url.includes("cloudinary.com")) {
-    // Insert fl_attachment after /upload/ in the URL
     return url.replace("/upload/", "/upload/fl_attachment/");
   }
+  // UploadThing & other CDNs — use URL as-is; browser handles the download
   return url;
 };
 
@@ -277,15 +281,32 @@ const PrescriptionViewModal = ({
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  /* upload state */
-  const [files, setFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
+  /* ── split file state: PDFs → UploadThing, images → Cloudinary ── */
+  const [pdfFiles, setPdfFiles] = useState<File[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
+  const [pdfUploadProgress, setPdfUploadProgress] = useState<Record<string, number>>({});
 
   /* lightbox */
   const [lightboxDoc, setLightboxDoc] = useState<LightboxDoc | null>(null);
 
   const { fetchAppointmentById } = useAppointmentStore();
+
+  /* UploadThing hook — PDF route only */
+  const { startUpload: startPdfUpload, isUploading: utUploading } = useUploadThing(
+    "prescriptionPdf",
+    {
+      headers: () => {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        return { Authorization: `Bearer ${token ?? ""}` };
+      },
+      onUploadProgress: (p) => {
+        setPdfUploadProgress((prev) => ({ ...prev, progress: p }));
+      },
+    }
+  );
 
   const documents = appointment.documents ?? [];
   const otherUser =
@@ -307,30 +328,60 @@ const PrescriptionViewModal = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const removeLocalFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  };
+  const removePdfFile = (index: number) =>
+    setPdfFiles((prev) => prev.filter((_, i) => i !== index));
+
+  const removeImageFile = (index: number) =>
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
 
   const closeLightbox = useCallback(() => setLightboxDoc(null), []);
 
-  /* ── upload ── */
-
-  const submitUpload = async () => {
-    if (!files.length) return;
-
-    const form = new FormData();
-    files.forEach((file) => form.append("documents", file));
-
-    setUploading(true);
+  /* ── Upload PDFs via UploadThing ── */
+  const submitPdfUpload = async () => {
+    if (!pdfFiles.length) return;
+    setUploadingPdf(true);
     try {
-      await postFormWithAuth(`/appointments/${appointment._id}/documents`, form);
-      setFiles([]);
+      const results = await startPdfUpload(pdfFiles);
+      if (!results?.length) throw new Error("UploadThing returned no results");
+
+      // Register each uploaded PDF URL in our backend
+      await Promise.all(
+        results.map((file) =>
+          postWithAuth(`/appointments/${appointment._id}/documents/register`, {
+            url: file.url,
+            key: file.key,
+            name: file.name,
+            mimetype: "application/pdf",
+          })
+        )
+      );
+
+      setPdfFiles([]);
+      setPdfUploadProgress({});
       await fetchAppointmentById(appointment._id);
     } catch (err) {
-      console.error("Upload failed:", err);
-      alert("Upload failed. Please try again.");
+      console.error("PDF upload failed:", err);
+      alert("PDF upload failed. Please try again.");
     } finally {
-      setUploading(false);
+      setUploadingPdf(false);
+    }
+  };
+
+  /* ── Upload images via Cloudinary (existing Express route) ── */
+  const submitImageUpload = async () => {
+    if (!imageFiles.length) return;
+    const form = new FormData();
+    imageFiles.forEach((file) => form.append("documents", file));
+    setUploadingImage(true);
+    try {
+      await postFormWithAuth(`/appointments/${appointment._id}/documents`, form);
+      setImageFiles([]);
+      await fetchAppointmentById(appointment._id);
+    } catch (err) {
+      console.error("Image upload failed:", err);
+      alert("Image upload failed. Please try again.");
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -354,11 +405,11 @@ const PrescriptionViewModal = ({
 
   /* ── local previews for selected-but-not-yet-uploaded files ── */
 
-  const localPreviews = files.map((file) => ({
+  const localPdfPreviews = pdfFiles.map((file) => ({ file }));
+
+  const localImagePreviews = imageFiles.map((file) => ({
     file,
-    preview:
-      file.type === "application/pdf" ? null : URL.createObjectURL(file),
-    isLocalPdf: file.type === "application/pdf",
+    preview: URL.createObjectURL(file),
   }));
 
   /* ── render ── */
@@ -519,95 +570,172 @@ const PrescriptionViewModal = ({
 
               {/* ── Upload section (doctor only) ── */}
               {userType === "doctor" && (
-                <div className="border-t pt-5 space-y-4">
+                <div className="border-t pt-5 space-y-6">
                   <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                     <Plus className="w-4 h-4" />
                     Add Documents
                   </h3>
 
-                  {/* Dropzone */}
-                  <label className="border-2 border-dashed border-gray-200 hover:border-green-400 rounded-xl p-6 flex flex-col items-center justify-center text-sm text-gray-500 cursor-pointer transition-colors duration-200 bg-gray-50 hover:bg-green-50/30">
-                    <Upload className="w-6 h-6 mb-2 text-green-500" />
-                    <span className="font-medium">
-                      Click to select images or PDFs
-                    </span>
-                    <span className="text-xs text-gray-400 mt-1">
-                      JPG, PNG, WEBP, PDF · Max 10 MB per file
-                    </span>
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*,.pdf"
-                      className="hidden"
-                      onChange={(e) =>
-                        setFiles(Array.from(e.target.files || []))
-                      }
-                      disabled={uploading}
-                    />
-                  </label>
+                  {/* ── PDF dropzone (UploadThing) ── */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium text-gray-700">PDFs</span>
+                      <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                        via UploadThing
+                      </span>
+                    </div>
 
-                  {/* Local previews (selected, not yet uploaded) */}
-                  {localPreviews.length > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                      {localPreviews.map(({ file, preview, isLocalPdf }, i) => (
+                    <label className="border-2 border-dashed border-blue-200 hover:border-blue-400 rounded-xl p-5 flex flex-col items-center justify-center text-sm text-gray-500 cursor-pointer transition-colors duration-200 bg-blue-50/30 hover:bg-blue-50/60">
+                      <FileText className="w-6 h-6 mb-2 text-blue-500" />
+                      <span className="font-medium">Click to select PDF files</span>
+                      <span className="text-xs text-gray-400 mt-1">PDF · Max 16 MB per file · Up to 5 files</span>
+                      <input
+                        type="file"
+                        multiple
+                        accept=".pdf,application/pdf"
+                        className="hidden"
+                        onChange={(e) => setPdfFiles(Array.from(e.target.files || []))}
+                        disabled={uploadingPdf || utUploading}
+                      />
+                    </label>
+
+                    {/* PDF local previews */}
+                    {localPdfPreviews.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {localPdfPreviews.map(({ file }, i) => (
+                          <div
+                            key={i}
+                            className="relative border border-blue-200 rounded-xl overflow-hidden bg-white shadow-sm"
+                          >
+                            <div className="h-20 bg-blue-50 flex flex-col items-center justify-center gap-1">
+                              <FileText className="w-7 h-7 text-blue-500" />
+                              <span className="text-xs text-blue-600 font-medium">PDF</span>
+                            </div>
+                            <div className="px-2 py-1">
+                              <p className="text-xs text-gray-500 truncate">{file.name}</p>
+                              <p className="text-xs text-gray-400">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+                            </div>
+                            <button
+                              className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 transition-colors"
+                              onClick={() => removePdfFile(i)}
+                              disabled={uploadingPdf}
+                              type="button"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* PDF upload progress */}
+                    {(uploadingPdf || utUploading) && (
+                      <div className="w-full bg-blue-100 rounded-full h-1.5">
                         <div
-                          key={i}
-                          className="relative border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm"
-                        >
-                          <div className="h-24 bg-gray-50 flex items-center justify-center">
-                            {isLocalPdf ? (
-                              <div className="flex flex-col items-center gap-1 text-red-500">
-                                <FileText className="w-8 h-8" />
-                                <span className="text-xs text-gray-500">PDF</span>
-                              </div>
-                            ) : (
-                              // eslint-disable-next-line @next/next/no-img-element
+                          className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
+                          style={{ width: `${(pdfUploadProgress as any).progress ?? 30}%` }}
+                        />
+                      </div>
+                    )}
+
+                    {pdfFiles.length > 0 && (
+                      <Button
+                        onClick={submitPdfUpload}
+                        disabled={uploadingPdf || utUploading}
+                        className="bg-blue-600 hover:bg-blue-700 gap-2"
+                      >
+                        {uploadingPdf || utUploading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Uploading PDF{pdfFiles.length > 1 ? "s" : ""}…
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4" />
+                            Upload {pdfFiles.length} PDF{pdfFiles.length > 1 ? "s" : ""}
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* ── Image dropzone (Cloudinary) ── */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium text-gray-700">Images</span>
+                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+                        via Cloudinary
+                      </span>
+                    </div>
+
+                    <label className="border-2 border-dashed border-gray-200 hover:border-green-400 rounded-xl p-5 flex flex-col items-center justify-center text-sm text-gray-500 cursor-pointer transition-colors duration-200 bg-gray-50 hover:bg-green-50/30">
+                      <ImageIcon className="w-6 h-6 mb-2 text-green-500" />
+                      <span className="font-medium">Click to select images</span>
+                      <span className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP · Max 10 MB per file</span>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => setImageFiles(Array.from(e.target.files || []))}
+                        disabled={uploadingImage}
+                      />
+                    </label>
+
+                    {/* Image local previews */}
+                    {localImagePreviews.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {localImagePreviews.map(({ file, preview }, i) => (
+                          <div
+                            key={i}
+                            className="relative border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm"
+                          >
+                            <div className="h-24 bg-gray-50">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                                src={preview!}
+                                src={preview}
                                 alt={file.name}
                                 className="w-full h-full object-cover"
                               />
-                            )}
+                            </div>
+                            <div className="px-2 py-1">
+                              <p className="text-xs text-gray-500 truncate">{file.name}</p>
+                            </div>
+                            <button
+                              className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 transition-colors"
+                              onClick={() => removeImageFile(i)}
+                              disabled={uploadingImage}
+                              type="button"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
                           </div>
-                          <div className="px-2 py-1">
-                            <p className="text-xs text-gray-500 truncate">
-                              {file.name}
-                            </p>
-                          </div>
-                          <button
-                            className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 transition-colors"
-                            onClick={() => removeLocalFile(i)}
-                            disabled={uploading}
-                            type="button"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
 
-                  {/* Upload button */}
-                  {files.length > 0 && (
-                    <Button
-                      onClick={submitUpload}
-                      disabled={uploading}
-                      className="bg-green-600 hover:bg-green-700 gap-2"
-                    >
-                      {uploading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Uploading…
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-4 h-4" />
-                          Upload {files.length} file
-                          {files.length > 1 ? "s" : ""}
-                        </>
-                      )}
-                    </Button>
-                  )}
+                    {imageFiles.length > 0 && (
+                      <Button
+                        onClick={submitImageUpload}
+                        disabled={uploadingImage}
+                        className="bg-green-600 hover:bg-green-700 gap-2"
+                      >
+                        {uploadingImage ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Uploading image{imageFiles.length > 1 ? "s" : ""}…
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4" />
+                            Upload {imageFiles.length} image{imageFiles.length > 1 ? "s" : ""}
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
             </CardContent>

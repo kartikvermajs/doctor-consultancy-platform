@@ -461,16 +461,7 @@ const PatientDashboardContent = () => {
               )}
             </div>
 
-            {appointment.status === "Completed" && (
-              <div className="flex gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                  />
-                ))}
-              </div>
-            )}
+
           </div>
         </div>
       </CardContent>

@@ -99,7 +99,56 @@ router.post(
 );
 
 /* =========================================================
+   REGISTER UPLOADTHING DOCUMENT (PDF from client-side upload)
+   Client uploads PDF directly to UploadThing CDN, then calls
+   this endpoint to save the URL/key reference in MongoDB.
+   ========================================================= */
+
+router.post(
+  "/:appointmentId/documents/register",
+  auth.authenticate,
+  async (req, res) => {
+    try {
+      if (req.auth.type !== "doctor") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { appointmentId } = req.params;
+      const { url, key, name, mimetype } = req.body;
+
+      if (!url || !key) {
+        return res.status(400).json({ message: "url and key are required" });
+      }
+
+      const appointment = await Appointment.findById(appointmentId);
+      if (!appointment) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+
+      const doc = {
+        url,
+        key,
+        mimetype: mimetype || "application/pdf",
+        type: "other",
+        uploadedBy: "doctor",
+      };
+
+      appointment.documents.push(doc);
+      await appointment.save();
+
+      console.log("✅ [REGISTER] UploadThing doc saved:", key);
+      return res.json(doc);
+    } catch (error) {
+      console.error("🔥 [REGISTER] Error:", error);
+      return res.status(500).json({ message: "Failed to register document" });
+    }
+  }
+);
+
+/* =========================================================
    DELETE DOCUMENT (HARDENED)
+   Deletes from Cloudinary (images) OR just removes the DB ref
+   for UploadThing PDFs (identified by ufs.uploadthing.com URL).
    ========================================================= */
 
 router.delete(
@@ -113,11 +162,20 @@ router.delete(
 
       const { appointmentId, key } = req.params;
 
+      // Find the document to check which CDN it belongs to
+      const appointment = await Appointment.findById(appointmentId);
+      const doc = appointment?.documents?.find((d) => d.key === key);
+
       console.log("🗑 [DELETE] Deleting document:", key);
 
-      await cloudinary.uploader.destroy(key, {
-        invalidate: true,
-      });
+      // Only destroy from Cloudinary if it's a Cloudinary-hosted file
+      if (doc && !doc.url?.includes("uploadthing.com") && !doc.url?.includes("ufs.sh")) {
+        try {
+          await cloudinary.uploader.destroy(key, { invalidate: true });
+        } catch (cdnErr) {
+          console.warn("⚠️ [DELETE] Cloudinary destroy failed (non-fatal):", cdnErr.message);
+        }
+      }
 
       await Appointment.updateOne(
         { _id: appointmentId },
