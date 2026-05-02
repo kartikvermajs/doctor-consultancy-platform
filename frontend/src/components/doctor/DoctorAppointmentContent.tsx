@@ -6,6 +6,7 @@ import { userAuthStore } from "@/store/authStore";
 import { Appointment, useAppointmentStore } from "@/store/appointmentStore";
 import { Card, CardContent } from "../ui/card";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../ui/button";
 import {
   Calendar,
@@ -72,8 +73,13 @@ const DoctorAppointmentContent = () => {
   const { user } = userAuthStore();
   const { appointments, fetchAppointments, loading, updateAppointmentStatus } =
     useAppointmentStore();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
+  const [activeTab, setActiveTab] = useState<"upcoming" | "past">(() => {
+    const tab = searchParams?.get("tab");
+    return tab === "past" ? "past" : "upcoming";
+  });
   
   useEffect(() => {
     if (user?.type === "doctor") {
@@ -144,10 +150,19 @@ const DoctorAppointmentContent = () => {
     past: "completed",
   };
 
-  
-  const AppointmentCard = ({ appointment }: { appointment: Appointment }) => (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardContent className="p-6">
+  const AppointmentCard = ({ appointment }: { appointment: Appointment }) => {
+    const isPast = appointment.status === "Completed";
+
+    return (
+      <Card 
+        className={`transition-shadow ${isPast ? 'hover:shadow-md cursor-pointer hover:border-green-200' : 'hover:shadow-lg'}`}
+        onClick={() => {
+          if (isPast) {
+            router.push(`/doctor/patient-history/${appointment.patientId?._id}`);
+          }
+        }}
+      >
+        <CardContent className="p-6">
         <div className="flex flex-col md:flex-row gap-6">
           <Avatar className="w-20 h-20">
             <AvatarImage src={appointment.patientId?.profileImage} />
@@ -198,7 +213,7 @@ const DoctorAppointmentContent = () => {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 pt-2">
+            <div className="flex flex-wrap gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
               {canJoinCall(appointment) && (
                 <Link href={`/call/${appointment._id}`}>
                   <Button size="sm" className="bg-green-600 hover:bg-green-700">
@@ -238,13 +253,16 @@ const DoctorAppointmentContent = () => {
             </div>
 
             {appointment.status === "Completed" && (
-              <ReviewStars appointmentId={appointment._id} />
+              <div onClick={(e) => e.stopPropagation()}>
+                <ReviewStars appointmentId={appointment._id} />
+              </div>
             )}
           </div>
         </div>
       </CardContent>
     </Card>
   );
+};
 
   
   const EmptyState = ({ tab }: { tab: Tab }) => {
@@ -274,6 +292,7 @@ const DoctorAppointmentContent = () => {
             onValueChange={(value) => {
               if (value === "upcoming" || value === "past") {
                 setActiveTab(value);
+                window.history.replaceState(null, '', `?tab=${value}`);
               }
             }}
           >
