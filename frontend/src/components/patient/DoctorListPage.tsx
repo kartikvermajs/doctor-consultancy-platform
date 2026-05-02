@@ -1,5 +1,6 @@
 "use client";
 import { DoctorFilters } from "@/lib/types";
+import { Doctor } from "@/lib/types";
 import { useDoctorStore } from "@/store/doctorStore";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -19,6 +20,43 @@ import {
 } from "../ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Link from "next/link";
+import DoctorReviewModal from "./DoctorReviewModal";
+
+/* ── Star renderer (filled / partial / empty) ── */
+const StarRating = ({ rating, count }: { rating: number | null; count: number }) => {
+  const val = rating ?? 0;
+  return (
+    <div className="flex items-center justify-center gap-1.5 mb-3">
+      <div className="flex">
+        {[1, 2, 3, 4, 5].map((s) => {
+          const filled = val >= s;
+          const partial = !filled && val > s - 1;
+          return (
+            <span key={s} className="relative inline-block">
+              <Star className="w-4 h-4 text-gray-200" fill="currentColor" />
+              {(filled || partial) && (
+                <span
+                  className="absolute inset-0 overflow-hidden"
+                  style={{ width: filled ? "100%" : `${(val - (s - 1)) * 100}%` }}
+                >
+                  <Star className="w-4 h-4 text-orange-400" fill="currentColor" />
+                </span>
+              )}
+            </span>
+          );
+        })}
+      </div>
+      {val > 0 ? (
+        <>
+          <span className="font-bold text-sm text-gray-800">{val.toFixed(1)}</span>
+          <span className="text-gray-400 text-xs">({count})</span>
+        </>
+      ) : (
+        <span className="text-xs text-gray-400">No reviews yet</span>
+      )}
+    </div>
+  );
+};
 
 const DoctorListPage = () => {
   const searchParams = useSearchParams();
@@ -36,6 +74,7 @@ const DoctorListPage = () => {
   });
 
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
 
   useEffect(() => {
     fetchDoctors(filters);
@@ -59,6 +98,7 @@ const DoctorListPage = () => {
   const activeFilterCount = Object.values(filters).filter(
     (value) => value && value !== "experience" && value !== "desc"
   ).length;
+
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
       <Header />
@@ -245,13 +285,13 @@ const DoctorListPage = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-4 text-sm text-gray-600">
-          {loading ? "Seaching..." : `${doctors.length} doctor found`}
+          {loading ? "Searching..." : `${doctors.length} doctor found`}
         </div>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="amimate-plus">
+              <Card key={i} className="animate-pulse">
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     <div className="w-20 h-20 bg-gray-200 rounded-full mx-auto"></div>
@@ -272,11 +312,12 @@ const DoctorListPage = () => {
             {doctors.map((doctor) => (
               <Card
                 key={doctor._id}
-                className="hover:shadow-xl transition-all duration-300 bg-white border-0 shadow-md h-full"
+                onClick={() => setSelectedDoctor(doctor)}
+                className="hover:shadow-xl transition-all duration-300 bg-white border-0 shadow-md h-full cursor-pointer group"
               >
                 <CardContent className="p-6 flex flex-col h-full">
                   <div className="text-center mb-4">
-                    <Avatar className="w-20 h-20 mx-auto mb-3">
+                    <Avatar className="w-20 h-20 mx-auto mb-3 ring-2 ring-green-50 group-hover:ring-green-200 transition-all">
                       <AvatarImage
                         src={doctor.profileImage}
                         alt={doctor.name}
@@ -287,29 +328,18 @@ const DoctorListPage = () => {
                       </AvatarFallback>
                     </Avatar>
 
-                    <h3 className="text-lg font-bold text-green-700 mb-1">
+                    <h3 className="text-lg font-bold text-green-700 mb-1 group-hover:text-green-600 transition-colors">
                       {doctor.name}
                     </h3>
                     <p className="text-gray-600 text-sm mb-1">
                       {doctor.specialization}
                     </p>
-
                     <p className="text-gray-500 text-xs mb-2">
                       {doctor.experience} years experience
                     </p>
 
-                    <div className="flex items-center justify-center space-x-1 mb-3">
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className="w-4 h-4 fill-orange-400 text-orange-400"
-                          />
-                        ))}
-                      </div>
-                      <span className="font-bold">5.0</span>
-                      <span className="text-gray-500 text-xs">(620)</span>
-                    </div>
+                    {/* ── Dynamic star rating ── */}
+                    <StarRating rating={doctor.avgRating} count={doctor.totalReviews} />
                   </div>
 
                   <div className="flex flex-wrap gap-1 justify-center mb-4">
@@ -322,7 +352,6 @@ const DoctorListPage = () => {
                         {category}
                       </Badge>
                     ))}
-
                     <Badge
                       variant="secondary"
                       className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs"
@@ -334,43 +363,51 @@ const DoctorListPage = () => {
 
                   <div className="space-y-2 mb-4 text-center">
                     <div className="flex items-center justify-center text-gray-600">
-                      <MapPin className="w-4 h-4 mr-1"/>
+                      <MapPin className="w-4 h-4 mr-1" />
                       <span className="text-sm">{doctor.hospitalInfo.city}</span>
                     </div>
-
-                           <div className="flex justify-center items-center gap-2 text-center">
-                     <p className="text-gray-600 text-md font-semibold">
-                      Consultation Fee:
-                     </p>
-                     <p className="font-bold text-green-600 text-lg">₹{doctor.fees}</p>
+                    <div className="flex justify-center items-center gap-2 text-center">
+                      <p className="text-gray-600 text-md font-semibold">
+                        Consultation Fee:
+                      </p>
+                      <p className="font-bold text-green-600 text-lg">₹{doctor.fees}</p>
+                    </div>
                   </div>
-                  </div>
-
-           
 
                   <div className="mt-auto">
-                    <Link href={`/patient/booking/${doctor._id}`} className="block">
-                    <Button className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg ply-2 text-sm font-medium shadow-lg hover:shadow-xl transition-all">
+                    {/* Stop propagation so clicking Book doesn't open the modal */}
+                    <Link
+                      href={`/patient/booking/${doctor._id}`}
+                      className="block"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Button className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg py-2 text-sm font-medium shadow-lg hover:shadow-xl transition-all">
                         Book Appointment
-                    </Button>
+                      </Button>
                     </Link>
-
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : (
-           <Card className="p-12 text-center">
+          <Card className="p-12 text-center">
             <div className="text-gray-400 mb-4">
-              <Search className="w-16 h-16 mx-auto"/>
+              <Search className="w-16 h-16 mx-auto" />
             </div>
             <h3 className="text-xl font-semibold text-gray-600 mb-2">No doctors found</h3>
             <p className="text-gray-500 mb-4">Try adjusting your filters or search criteria</p>
             <Button onClick={clearFilters}>Clear Filters</Button>
-           </Card>
+          </Card>
         )}
       </div>
+
+      {/* ── Review Modal ── */}
+      <DoctorReviewModal
+        doctor={selectedDoctor}
+        open={!!selectedDoctor}
+        onClose={() => setSelectedDoctor(null)}
+      />
     </div>
   );
 };

@@ -4,6 +4,8 @@ const validate = require("../middleware/validate");
 const { authenticate, requireRole } = require("../middleware/auth");
 const Doctor = require("../modal/Doctor");
 const Appointment = require("../modal/Appointment");
+const Review = require("../modal/Review");
+const mongoose = require("mongoose");
 
 const router = express.Router();
 
@@ -67,14 +69,42 @@ router.get(
       const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
       const skip = (Number(page) - 1) * Number(limit);
 
-      const [items, total] = await Promise.all([
+      const [doctors, total] = await Promise.all([
         Doctor.find(filter)
           .select("-password -googleId")
           .sort(sort)
           .skip(skip)
-          .limit(Number(limit)),
+          .limit(Number(limit))
+          .lean(),
         Doctor.countDocuments(filter),
       ]);
+
+      // Attach real rating stats for each doctor
+      const doctorIds = doctors.map((d) => d._id);
+      const ratingAgg = await Review.aggregate([
+        { $match: { doctorId: { $in: doctorIds } } },
+        {
+          $group: {
+            _id: "$doctorId",
+            avgRating: { $avg: "$rating" },
+            totalReviews: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const ratingMap = {};
+      ratingAgg.forEach((r) => {
+        ratingMap[r._id.toString()] = {
+          avgRating: Math.round(r.avgRating * 10) / 10,
+          totalReviews: r.totalReviews,
+        };
+      });
+
+      const items = doctors.map((d) => ({
+        ...d,
+        avgRating: ratingMap[d._id.toString()]?.avgRating ?? null,
+        totalReviews: ratingMap[d._id.toString()]?.totalReviews ?? 0,
+      }));
 
       res.ok(items, "Doctors fetched", {
         page: Number(page),

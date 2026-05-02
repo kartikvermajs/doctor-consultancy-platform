@@ -114,6 +114,8 @@ export interface Doctor {
   isVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
+  avgRating: number | null;
+  totalReviews: number;
 }
 
 
