@@ -87,6 +87,8 @@ import { Badge } from "../ui/badge";
 import { getStatusColor } from "@/lib/constant";
 import PrescriptionViewModal from "../doctor/PrescriptionViewModal";
 import ReviewModal from "./ReviewModal";
+import DoctorReviewModal from "./DoctorReviewModal";
+import { Doctor } from "@/lib/types";
 
 type Tab = "upcoming" | "past";
 
@@ -95,6 +97,7 @@ const PatientDashboardContent = () => {
   const { appointments, fetchAppointments, loading } = useAppointmentStore();
 
   const [activeTab, setActiveTab] = useState<Tab>("upcoming");
+  const [reviewDoctor, setReviewDoctor] = useState<Partial<Doctor> | null>(null);
 
   
   useEffect(() => {
@@ -150,19 +153,47 @@ const PatientDashboardContent = () => {
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row gap-6">
-          <Avatar className="w-20 h-20">
-            <AvatarImage src={appointment.doctorId?.profileImage} />
-            <AvatarFallback className="bg-green-100 text-green-600 text-lg">
-              {appointment.doctorId?.name?.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
+          {/* Clickable avatar */}
+          <button
+            onClick={() =>
+              setReviewDoctor({
+                _id: appointment.doctorId?._id,
+                name: appointment.doctorId?.name,
+                profileImage: appointment.doctorId?.profileImage,
+                specialization: appointment.doctorId?.specialization,
+                avgRating: null,
+                totalReviews: 0,
+              } as Partial<Doctor>)
+            }
+            className="shrink-0 focus:outline-none"
+            title="View reviews"
+          >
+            <Avatar className="w-20 h-20 hover:ring-2 hover:ring-green-400 transition-all cursor-pointer">
+              <AvatarImage src={appointment.doctorId?.profileImage} />
+              <AvatarFallback className="bg-green-100 text-green-600 text-lg">
+                {appointment.doctorId?.name?.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+          </button>
 
           <div className="flex-1 space-y-4">
             <div className="flex justify-between">
               <div>
-                <h3 className="text-lg font-semibold">
+                <button
+                  onClick={() =>
+                    setReviewDoctor({
+                      _id: appointment.doctorId?._id,
+                      name: appointment.doctorId?.name,
+                      profileImage: appointment.doctorId?.profileImage,
+                      specialization: appointment.doctorId?.specialization,
+                      avgRating: null,
+                      totalReviews: 0,
+                    } as Partial<Doctor>)
+                  }
+                  className="text-lg font-semibold hover:text-green-600 transition-colors text-left"
+                >
                   {appointment.doctorId?.name}
-                </h3>
+                </button>
                 <p className="text-sm text-gray-600">
                   {appointment.doctorId?.specialization}
                 </p>
@@ -334,6 +365,13 @@ const PatientDashboardContent = () => {
         </div>
       </div>
       <FloatingChatWidget />
+
+      {/* ── Doctor review modal ── */}
+      <DoctorReviewModal
+        doctor={reviewDoctor as Doctor | null}
+        open={!!reviewDoctor}
+        onClose={() => setReviewDoctor(null)}
+      />
     </>
   );
 };

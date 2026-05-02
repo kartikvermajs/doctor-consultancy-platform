@@ -90,8 +90,17 @@ const DoctorReviewModal: React.FC<Props> = ({ doctor, open, onClose }) => {
 
   if (!doctor) return null;
 
-  const rating = doctor.avgRating ?? 0;
-  const count = doctor.totalReviews ?? 0;
+  // Use prop values if available (from doctor list), else compute from fetched reviews
+  const displayRating =
+    doctor.avgRating != null
+      ? doctor.avgRating
+      : reviews.length > 0
+      ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10
+      : 0;
+  const displayCount =
+    doctor.totalReviews != null && doctor.totalReviews > 0
+      ? doctor.totalReviews
+      : reviews.length;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -112,19 +121,19 @@ const DoctorReviewModal: React.FC<Props> = ({ doctor, open, onClose }) => {
                   {doctor.name}
                 </DialogTitle>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  {doctor.specialization} · {doctor.experience} yrs exp
+                  {doctor.specialization}{doctor.experience ? ` · ${doctor.experience} yrs exp` : ""}
                 </p>
 
                 <div className="flex items-center gap-2 mt-2">
-                  <StarRating rating={rating} size="lg" />
+                  <StarRating rating={displayRating} size="lg" />
                   <span className="text-lg font-bold text-gray-800">
-                    {rating > 0 ? rating.toFixed(1) : "—"}
+                    {displayRating > 0 ? displayRating.toFixed(1) : "—"}
                   </span>
                   <Badge
                     variant="secondary"
                     className="bg-green-50 text-green-700 text-xs"
                   >
-                    {count} {count === 1 ? "review" : "reviews"}
+                    {displayCount} {displayCount === 1 ? "review" : "reviews"}
                   </Badge>
                 </div>
               </div>
