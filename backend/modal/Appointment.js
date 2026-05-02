@@ -52,15 +52,14 @@ const appointmentSchema = new mongoose.Schema(
     zegoRoomId: { type: String },
     doctorEnded: { type: Boolean, default: false },
 
-    
     prescriptionText: { type: String, default: "" },
     notes: { type: String, default: "" },
 
-    
     documents: [documentSchema],
     documentSummary: { type: String, default: "" },
 
-    
+    embedding: { type: [Number], default: [] },
+
     consultationFees: { type: Number, required: true },
     platformFees: { type: Number, required: true },
     totalAmount: { type: Number, required: true },

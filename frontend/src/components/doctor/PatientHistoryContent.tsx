@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import { userAuthStore } from "@/store/authStore";
@@ -17,8 +17,12 @@ interface Props {
 const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
   const router = useRouter();
   const { user } = userAuthStore();
-  const { appointments, fetchAppointments, loading } = useAppointmentStore();
+  const { appointments, fetchAppointments, loading, searchPatientPrescriptions } = useAppointmentStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [aiResults, setAiResults] = useState<any[] | null>(null);
+
+  const searchCache = useRef<Record<string, any[]>>({});
 
   useEffect(() => {
     // If appointments are empty (e.g., page hard refresh), fetch them.
@@ -36,6 +40,8 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
 
   const filteredHistory = useMemo(() => {
     if (!searchQuery) return patientHistory;
+    if (aiResults) return aiResults;
+    // Fallback while typing/searching
     const lowerQuery = searchQuery.toLowerCase();
     return patientHistory.filter(
       (apt) =>
@@ -43,7 +49,41 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
         apt.notes?.toLowerCase().includes(lowerQuery) ||
         apt.symptoms?.toLowerCase().includes(lowerQuery)
     );
-  }, [patientHistory, searchQuery]);
+  }, [patientHistory, searchQuery, aiResults]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setAiResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    const trimmedQuery = searchQuery.trim();
+    if (searchCache.current[trimmedQuery]) {
+      setAiResults(searchCache.current[trimmedQuery]);
+      return;
+    }
+
+    setIsSearching(true);
+    const timeoutId = setTimeout(async () => {
+      try {
+        const results = await searchPatientPrescriptions(patientId, trimmedQuery);
+        searchCache.current[trimmedQuery] = results;
+        // Only set results if the query hasn't changed while awaiting
+        if (searchQuery.trim() === trimmedQuery) {
+          setAiResults(results);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (searchQuery.trim() === trimmedQuery) {
+          setIsSearching(false);
+        }
+      }
+    }, 400); // 400ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, patientId, searchPatientPrescriptions]);
 
   const patientInfo = patientHistory.length > 0 ? patientHistory[0].patientId : null;
 
@@ -132,7 +172,7 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
         <div className="space-y-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 px-1">Prescription History</h2>
 
-          {loading && patientHistory.length === 0 ? (
+          {(loading && patientHistory.length === 0) || isSearching ? (
             <div className="space-y-4">
                {[1, 2, 3].map((i) => (
                  <Card key={i} className="animate-pulse">

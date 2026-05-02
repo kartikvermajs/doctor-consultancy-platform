@@ -158,7 +158,65 @@ const generateReplyStream = async (context, userMessage, patientName = "there", 
   res.end();
 };
 
+const aiFilterPrescriptions = async (query, appointments) => {
+  try {
+    const genAI = getNativeGenAI();
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+
+    let historyText = "";
+    appointments.forEach((apt) => {
+      historyText += `[ID: ${apt._id}]\n`;
+      historyText += `Symptoms: ${apt.symptoms || "None"}\n`;
+      historyText += `Notes: ${apt.notes || "None"}\n`;
+      historyText += `Prescription: ${apt.prescriptionText || "None"}\n\n`;
+    });
+
+    const prompt = `
+You are a highly intelligent medical assistant analyzing a patient's prescription history.
+The doctor is searching for specific past consultations. 
+
+DOCTOR'S SEARCH QUERY: "${query}"
+
+PATIENT HISTORY:
+${historyText}
+
+Your task is to identify which consultation records best match the doctor's query.
+Return ONLY a valid JSON array of the matching IDs. Do not include any markdown formatting, backticks, or other text.
+If no records match, return an empty array [].
+Example output: ["60d5ecb8b392d700153f3a12", "60d5ecb8b392d700153f3a13"]
+    `.trim();
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text().trim();
+    
+    const cleanedText = responseText.replace(/```json/gi, "").replace(/```/g, "").trim();
+    
+    const ids = JSON.parse(cleanedText);
+    if (!Array.isArray(ids)) {
+      throw new Error("AI did not return an array");
+    }
+    return ids;
+  } catch (error) {
+    console.error("[aiService] aiFilterPrescriptions error:", error.message);
+    throw error;
+  }
+};
+
+const generateEmbedding = async (text) => {
+  try {
+    const genAI = getNativeGenAI();
+    const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
+    const result = await model.embedContent(text);
+    return result.embedding.values;
+  } catch (error) {
+    console.error("[aiService] generateEmbedding error:", error.message);
+    return [];
+  }
+};
+
 module.exports = {
   generateReplyStream,
   buildMessages,
+  generateEmbedding,
+  aiFilterPrescriptions,
 };

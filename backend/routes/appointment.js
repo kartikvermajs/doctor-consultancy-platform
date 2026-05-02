@@ -3,8 +3,100 @@ const Appointment = require("../modal/Appointment");
 const { authenticate, requireRole } = require("../middleware/auth");
 const { query, body } = require("express-validator");
 const validate = require("../middleware/validate");
+const { generateEmbedding, aiFilterPrescriptions } = require("../services/aiService");
 
 const router = express.Router();
+
+// Helper for Cosine Similarity
+const cosineSimilarity = (vecA, vecB) => {
+  let dotProduct = 0, normA = 0, normB = 0;
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+  if (normA === 0 || normB === 0) return 0;
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+};
+
+router.get(
+  "/search-prescriptions",
+  authenticate,
+  requireRole("doctor"),
+  async (req, res) => {
+    try {
+      const { query, patientId } = req.query;
+      if (!query) return res.badRequest("Query is required");
+
+      const filter = {
+        doctorId: req.auth.id,
+        status: "Completed",
+        embedding: { $exists: true, $not: { $size: 0 } }
+      };
+      
+      if (patientId) {
+        filter.patientId = patientId;
+      }
+
+      // Fetch the last 200 completed appointments with embeddings for this filter
+      const appointments = await Appointment.find(filter)
+        .sort({ slotStartIso: -1 })
+        .limit(200)
+        .populate("patientId", "name email phone dob age profileImage")
+        .populate("doctorId", "name fees phone specialization hospitalInfo profileImage")
+        .lean();
+
+      if (appointments.length === 0) {
+        return res.ok([], "No prescriptions found");
+      }
+
+      let topResults = [];
+      let aiSuccess = false;
+
+      // 1. AI-First Search Approach
+      try {
+        const matchedIds = await aiFilterPrescriptions(query, appointments);
+        if (matchedIds && Array.isArray(matchedIds)) {
+          topResults = appointments.filter(apt => matchedIds.includes(apt._id.toString()));
+          aiSuccess = true;
+        }
+      } catch (aiError) {
+        console.warn("[search-prescriptions] AI search failed, falling back to semantic search:", aiError.message);
+      }
+
+      // 2. Semantic Fallback
+      if (!aiSuccess) {
+        console.log("[search-prescriptions] Running semantic fallback...");
+        const queryEmbedding = await generateEmbedding(query);
+        if (!queryEmbedding || queryEmbedding.length === 0) {
+          return res.serverError("Failed to generate embedding for query");
+        }
+
+        const lowerQuery = query.toLowerCase();
+
+        const results = appointments.map((apt) => {
+          const similarity = apt.embedding && apt.embedding.length > 0 ? cosineSimilarity(queryEmbedding, apt.embedding) : 0;
+          
+          let keywordBonus = 0;
+          if (apt.prescriptionText && apt.prescriptionText.toLowerCase().includes(lowerQuery)) keywordBonus += 0.15;
+          if (apt.symptoms && apt.symptoms.toLowerCase().includes(lowerQuery)) keywordBonus += 0.1;
+          if (apt.notes && apt.notes.toLowerCase().includes(lowerQuery)) keywordBonus += 0.1;
+          
+          const finalScore = similarity + keywordBonus;
+          return { ...apt, score: finalScore };
+        });
+
+        results.sort((a, b) => b.score - a.score);
+        topResults = results.slice(0, 5);
+      }
+
+      res.ok(topResults, "Search results fetched successfully");
+    } catch (error) {
+      console.error("Search prescriptions error", error);
+      res.serverError("Failed to search prescriptions", [error.message]);
+    }
+  }
+);
 
 router.get(
   "/doctor",
@@ -205,6 +297,22 @@ router.put("/end/:id", authenticate, requireRole("doctor"), async (req, res) => 
     appointment.doctorEnded = true;
     appointment.prescriptionText = prescriptionText || "";
     appointment.notes = notes || "";
+
+    // Generate Embedding
+    const combinedText = `
+Symptoms: ${appointment.symptoms || "None"}
+Diagnosis/Notes: ${appointment.notes || "None"}
+Prescription: ${appointment.prescriptionText || "None"}
+    `.trim();
+    
+    try {
+      const embedding = await generateEmbedding(combinedText);
+      if (embedding && embedding.length > 0) {
+        appointment.embedding = embedding;
+      }
+    } catch (embError) {
+      console.error("Failed to generate embedding during consultation end:", embError);
+    }
 
     await appointment.save();
 

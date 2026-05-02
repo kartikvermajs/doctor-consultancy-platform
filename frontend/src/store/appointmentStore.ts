@@ -100,6 +100,7 @@ interface AppointmentState {
   deleteDocument: (appointmentId: string, key: string) => Promise<void>;
 
   updateDocumentSummary: (appointmentId: string, summary: string) => void;
+  searchPatientPrescriptions: (patientId: string, query: string) => Promise<Appointment[]>;
 }
 
 export const useAppointmentStore = create<AppointmentState>((set) => ({
@@ -312,5 +313,15 @@ export const useAppointmentStore = create<AppointmentState>((set) => ({
           ? { ...state.currentAppointment, documentSummary: summary }
           : state.currentAppointment,
     }));
+  },
+
+  searchPatientPrescriptions: async (patientId, query) => {
+    try {
+      const response = await getWithAuth(`/appointment/search-prescriptions?query=${encodeURIComponent(query)}&patientId=${encodeURIComponent(patientId)}`);
+      return response.data || [];
+    } catch (error) {
+      console.error("AI Search Error:", error);
+      return [];
+    }
   },
 }));
