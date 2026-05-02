@@ -2,10 +2,12 @@ import React, { Suspense } from 'react';
 import PatientHistoryContent from '@/components/doctor/PatientHistoryContent';
 import Loader from '@/components/Loader';
 
-const Page = ({ params }: { params: { patientId: string } }) => {
+const Page = async ({ params }: { params: Promise<{ patientId: string }> }) => {
+  const { patientId } = await params;
+
   return (
     <Suspense fallback={<Loader />}>
-      <PatientHistoryContent patientId={params.patientId} />
+      <PatientHistoryContent patientId={patientId} />
     </Suspense>
   );
 };
