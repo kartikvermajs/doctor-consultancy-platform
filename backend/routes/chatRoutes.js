@@ -11,7 +11,7 @@ const router = express.Router();
 router.post(
   "/",
   authenticate,
-  requireRole("patient"),
+  requireRole(["patient", "doctor"]),
   [
     body("message")
       .isString()

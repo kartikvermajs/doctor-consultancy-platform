@@ -25,8 +25,9 @@ module.exports = {
              return res.unauthorized("Invalid or expired token");
         }
     },
-    requireRole : role => (req,res,next) => {
-        if(!req.auth || req.auth.type !== role) {
+    requireRole : roles => (req,res,next) => {
+        const allowedRoles = Array.isArray(roles) ? roles : [roles];
+        if(!req.auth || !allowedRoles.includes(req.auth.type)) {
             return res.forbidden("Insufficient role permissions");
         }
         next();

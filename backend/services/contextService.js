@@ -1,5 +1,6 @@
 const Appointment = require("../modal/Appointment");
 const Patient = require("../modal/Patient");
+const Doctor = require("../modal/Doctor");
 
 const fetchPatientAppointments = async (patientId, limit = 10) => {
   return Appointment.find(
@@ -106,10 +107,46 @@ const buildPatientContext = async (patientId) => {
   return sections.join("\n");
 };
 
+const fetchDoctorProfile = async (doctorId) => {
+  return Doctor.findById(doctorId, {
+    name: 1,
+    specialization: 1,
+    qualification: 1,
+    experience: 1,
+    about: 1,
+  }).lean();
+};
+
+const formatDoctorProfile = (profile) => {
+  if (!profile) return "Doctor profile: Not available";
+
+  const lines = [`Doctor name: Dr. ${profile.name || "Unknown"}`];
+  if (profile.specialization) lines.push(`  Specialization: ${profile.specialization}`);
+  if (profile.qualification) lines.push(`  Qualification: ${profile.qualification}`);
+  if (profile.experience) lines.push(`  Experience: ${profile.experience} years`);
+  if (profile.about) lines.push(`  About: ${profile.about}`);
+
+  return lines.join("\n");
+};
+
+const buildDoctorContext = async (doctorId) => {
+  const profile = await fetchDoctorProfile(doctorId);
+
+  const sections = [];
+  sections.push("=== DOCTOR PROFILE ===");
+  sections.push(formatDoctorProfile(profile));
+  sections.push("\nYou are assisting this doctor. You can answer their general medical questions or help them with their practice.");
+
+  return sections.join("\n");
+};
+
 module.exports = {
   buildPatientContext,
+  buildDoctorContext,
   fetchPatientProfile,
+  fetchDoctorProfile,
   fetchPatientAppointments,
   formatPatientProfile,
+  formatDoctorProfile,
   formatAppointment,
 };

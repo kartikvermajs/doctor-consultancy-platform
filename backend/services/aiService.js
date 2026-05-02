@@ -162,35 +162,16 @@ const generateReply = async (context, userMessage, patientName = "there") => {
   const sanitisedMessage = userMessage.trim().slice(0, 2000);
   const messages = buildMessages(context, sanitisedMessage, patientName);
 
-  const GEMINI_COMPAT_MODELS = ["gemini-2.0-flash-lite", "gemini-2.0-flash"];
   const OPENROUTER_FREE_MODELS = [
-    "google/gemma-4-31b-it:free",
     "google/gemma-4-26b-a4b-it:free",
-    "qwen/qwen3-next-80b-a3b-instruct:free",
     "nvidia/nemotron-3-super-120b-a12b:free",
   ];
 
   try {
-    return await tryModels(getGeminiCompatClient(), GEMINI_COMPAT_MODELS, messages, "Gemini-compat");
-  } catch (e1) {
-    console.warn(`[aiService] Gemini-compat exhausted (${e1.message}). Trying native Gemini SDK…`);
-  }
-
-  await sleep(500);
-
-  try {
-    return await tryNativeSDK(context, sanitisedMessage, patientName);
-  } catch (e2) {
-    console.warn(`[aiService] Native SDK exhausted (${e2.message}). Trying OpenRouter…`);
-  }
-
-  await sleep(300);
-
-  try {
     return await tryModels(getOpenRouterClient(), OPENROUTER_FREE_MODELS, messages, "OpenRouter");
-  } catch (e3) {
-    console.error(`[aiService] All paths failed: ${e3.message}`);
-    return isRateLimited(e3) ? RATE_LIMIT_RESPONSE : FALLBACK_RESPONSE;
+  } catch (err) {
+    console.error(`[aiService] All paths failed: ${err.message}`);
+    return isRateLimited(err) ? RATE_LIMIT_RESPONSE : FALLBACK_RESPONSE;
   }
 };
 

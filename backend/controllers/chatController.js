@@ -1,4 +1,4 @@
-const { buildPatientContext } = require("../services/contextService");
+const { buildPatientContext, buildDoctorContext } = require("../services/contextService");
 const { generateReply } = require("../services/aiService");
 
 const handleChatMessage = async (req, res) => {
@@ -9,11 +9,18 @@ const handleChatMessage = async (req, res) => {
       return res.badRequest("message is required and must be a non-empty string");
     }
 
-    const patientId = req.auth.id;
-    const patientName = req.user?.name?.trim() || "there";
+    const userId = req.auth.id;
+    const userRole = req.auth.type;
+    const userName = req.user?.name?.trim() || "there";
 
-    const context = await buildPatientContext(patientId);
-    const reply = await generateReply(context, message.trim(), patientName);
+    let context = "";
+    if (userRole === "doctor") {
+      context = await buildDoctorContext(userId);
+    } else {
+      context = await buildPatientContext(userId);
+    }
+    
+    const reply = await generateReply(context, message.trim(), userName);
 
     return res.ok({ reply }, "Chat response generated");
   } catch (error) {
