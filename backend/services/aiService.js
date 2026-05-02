@@ -100,15 +100,20 @@ const isRateLimited = (err) => {
   return status === 429 || String(err?.message ?? "").includes("429");
 };
 
-const tryModels = async (client, models, messages, label) => {
+const tryModelsStream = async (client, models, messages, label, res) => {
   for (const model of models) {
     try {
       console.log(`[aiService] ${label} → ${model}`);
-      const res = await client.chat.completions.create({ model, messages });
-      const text = res.choices?.[0]?.message?.content?.trim();
-      if (!text) throw new Error("Empty response");
-      console.log(`[aiService] ✓ ${label} ${model}`);
-      return text;
+      const stream = await client.chat.completions.create({ model, messages, stream: true });
+      
+      console.log(`[aiService] ✓ ${label} ${model} (Streaming)`);
+      for await (const chunk of stream) {
+        const text = chunk.choices[0]?.delta?.content || "";
+        if (text) {
+          res.write(text);
+        }
+      }
+      return;
     } catch (err) {
       if (isRateLimited(err)) {
         console.warn(`[aiService] ${label}/${model} rate-limited, trying next…`);
@@ -126,31 +131,7 @@ const tryModels = async (client, models, messages, label) => {
   throw new Error(`${label}: all models exhausted`);
 };
 
-const tryNativeSDK = async (context, userMessage, patientName) => {
-  const genAI = getNativeGenAI();
-  const prompt = buildNativePrompt(context, userMessage, patientName);
-  const NATIVE_MODELS = ["gemini-2.0-flash", "gemini-2.0-flash-lite"];
-
-  for (const modelName of NATIVE_MODELS) {
-    try {
-      console.log(`[aiService] Native SDK → ${modelName}`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      const text = result.response.text()?.trim();
-      if (!text) throw new Error("Empty response");
-      console.log(`[aiService] ✓ Native SDK ${modelName}`);
-      return text;
-    } catch (err) {
-      if (isRateLimited(err)) {
-        console.warn(`[aiService] Native ${modelName} rate-limited, trying next…`);
-        await sleep(800);
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw new Error("Native SDK: all models exhausted");
-};
+// ... unused native SDK omitted for brevity as it's not used ...
 
 const RATE_LIMIT_RESPONSE =
   "The AI assistant has reached its request limit. Please wait a minute and try again — or contact your doctor directly for urgent questions.";
@@ -158,7 +139,7 @@ const RATE_LIMIT_RESPONSE =
 const FALLBACK_RESPONSE =
   "I'm having trouble connecting to the AI service right now. Please try again in a moment.";
 
-const generateReply = async (context, userMessage, patientName = "there") => {
+const generateReplyStream = async (context, userMessage, patientName = "there", res) => {
   const sanitisedMessage = userMessage.trim().slice(0, 2000);
   const messages = buildMessages(context, sanitisedMessage, patientName);
 
@@ -168,14 +149,16 @@ const generateReply = async (context, userMessage, patientName = "there") => {
   ];
 
   try {
-    return await tryModels(getOpenRouterClient(), OPENROUTER_FREE_MODELS, messages, "OpenRouter");
+    await tryModelsStream(getOpenRouterClient(), OPENROUTER_FREE_MODELS, messages, "OpenRouter", res);
   } catch (err) {
     console.error(`[aiService] All paths failed: ${err.message}`);
-    return isRateLimited(err) ? RATE_LIMIT_RESPONSE : FALLBACK_RESPONSE;
+    const fallbackMsg = isRateLimited(err) ? RATE_LIMIT_RESPONSE : FALLBACK_RESPONSE;
+    res.write(fallbackMsg);
   }
+  res.end();
 };
 
 module.exports = {
-  generateReply,
+  generateReplyStream,
   buildMessages,
 };

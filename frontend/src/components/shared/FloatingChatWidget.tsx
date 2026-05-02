@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle, X, Send, Loader2, Bot } from "lucide-react";
-import { postWithAuth } from "@/service/httpService";
 
 type Role = "assistant" | "user";
 
@@ -12,6 +11,7 @@ interface ChatMessage {
   role: Role;
   text: string;
   timestamp: Date;
+  streaming?: boolean;
 }
 
 const formatTime = (date: Date): string =>
@@ -35,12 +35,10 @@ const FloatingChatWidget = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 300);
@@ -53,7 +51,6 @@ const FloatingChatWidget = () => {
     const text = message.trim();
     if (!text || isLoading) return;
 
-    
     const userMsg: ChatMessage = {
       id: uid(),
       role: "user",
@@ -64,28 +61,74 @@ const FloatingChatWidget = () => {
     setMessage("");
     setIsLoading(true);
 
+    // Placeholder streaming message
+    const streamingId = uid();
+    const streamingMsg: ChatMessage = {
+      id: streamingId,
+      role: "assistant",
+      text: "",
+      timestamp: new Date(),
+      streaming: true,
+    };
+    setMessages((prev) => [...prev, streamingMsg]);
+
     try {
-      const res = await postWithAuth<{ reply: string }>("/chat", {
-        message: text,
+      const token = localStorage.getItem("token");
+      const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+      const response = await fetch(`${BASE_URL}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ message: text }),
       });
 
-      const assistantMsg: ChatMessage = {
-        id: uid(),
-        role: "assistant",
-        text: res.data.reply,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
-    } catch (err: any) {
-      const errorMsg: ChatMessage = {
-        id: uid(),
-        role: "assistant",
-        text: "Sorry, I couldn't connect right now. Please try again in a moment.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    } finally {
+      if (!response.ok || !response.body) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = "";
+
       setIsLoading(false);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        accumulated += chunk;
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === streamingId ? { ...m, text: accumulated } : m
+          )
+        );
+        // Scroll during streaming
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      }
+
+      // Mark streaming as done
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === streamingId ? { ...m, streaming: false } : m
+        )
+      );
+    } catch (err: any) {
+      setIsLoading(false);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === streamingId
+            ? {
+                ...m,
+                text: "Sorry, I couldn't connect right now. Please try again in a moment.",
+                streaming: false,
+              }
+            : m
+        )
+      );
     }
   };
 
@@ -149,30 +192,33 @@ const FloatingChatWidget = () => {
                         : "bg-white text-gray-700 border border-gray-100 shadow-sm rounded-bl-sm"
                     }`}
                   >
-                    <p>{msg.text}</p>
-                    <span
-                      className={`text-[10px] mt-1 block ${
-                        msg.role === "user"
-                          ? "text-white/60 text-right"
-                          : "text-gray-400"
-                      }`}
-                    >
-                      {formatTime(msg.timestamp)}
-                    </span>
+                    {msg.text ? (
+                      <p style={{ whiteSpace: "pre-wrap" }}>{msg.text}</p>
+                    ) : (
+                      // Typing indicator for empty streaming messages
+                      <div className="flex items-center gap-1.5 py-0.5">
+                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
+                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
+                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
+                      </div>
+                    )}
+                    {msg.streaming && msg.text && (
+                      <span className="inline-block w-0.5 h-3.5 bg-gray-400 ml-0.5 animate-pulse align-middle" />
+                    )}
+                    {!msg.streaming && (
+                      <span
+                        className={`text-[10px] mt-1 block ${
+                          msg.role === "user"
+                            ? "text-white/60 text-right"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {formatTime(msg.timestamp)}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
-
-              {}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-white border border-gray-100 shadow-sm rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
-                  </div>
-                </div>
-              )}
 
               <div ref={bottomRef} />
             </div>
