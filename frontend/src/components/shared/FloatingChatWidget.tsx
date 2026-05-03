@@ -301,9 +301,8 @@ const FloatingChatWidget = () => {
                   aria-label="Open CuraBot"
                 >
                   <div
-                    className="rounded-2xl rounded-br-sm px-5 py-2.5 max-w-[250px] border border-white/60"
+                    className="rounded-2xl rounded-br-sm px-5 py-2.5 max-w-[250px] border border-green-200/60 bg-green-50/95"
                     style={{
-                      background: "rgba(255,255,255,0.88)",
                       backdropFilter: "blur(12px)",
                       WebkitBackdropFilter: "blur(12px)",
                       boxShadow: "0 6px 24px rgba(22,163,74,0.18), 0 1px 4px rgba(0,0,0,0.08)",
@@ -316,7 +315,7 @@ const FloatingChatWidget = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -5 }}
                         transition={{ duration: 0.22 }}
-                        className="text-[13px] font-semibold text-gray-800 whitespace-nowrap leading-snug"
+                        className="text-[13px] font-semibold text-green-600 whitespace-nowrap leading-snug"
                       >
                         {PROMPTS[promptIdx]}
                       </motion.p>
@@ -324,8 +323,7 @@ const FloatingChatWidget = () => {
                   </div>
                   {/* Tail */}
                   <div
-                    className="absolute right-5 -bottom-[5px] w-2.5 h-2.5 rotate-45 border-b border-r border-white/60"
-                    style={{ background: "rgba(255,255,255,0.88)" }}
+                    className="absolute right-5 -bottom-[5px] w-2.5 h-2.5 rotate-45 border-b border-r border-green-200/60 bg-green-50/95"
                   />
                 </motion.button>
               )}
