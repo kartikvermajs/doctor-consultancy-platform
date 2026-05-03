@@ -37,7 +37,7 @@ const uid = () => Math.random().toString(36).slice(2);
 const GREETING: ChatMessage = {
   id: "greeting",
   role: "assistant",
-  text: "Hi 👋 I'm your health assistant. I have access to your medical history and can help answer health-related questions. How can I help you today?",
+  text: "Hi 👋 I'm CuraBot your Health assistant. I have access to your medical history and can help answer health-related questions. How can I help you today?",
   timestamp: new Date(),
 };
 
@@ -80,6 +80,18 @@ const FloatingChatWidget = () => {
   useEffect(() => {
     if (isOpen) setTimeout(() => inputRef.current?.focus(), 300);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && isExpanded) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, isExpanded]);
+
 
   const toggleChat = () => {
     if (isOpen) {
@@ -198,20 +210,16 @@ const FloatingChatWidget = () => {
             style={{
               transformOrigin: "bottom right",
             }}
-            className={`bg-white overflow-hidden border border-gray-100 flex flex-col pointer-events-auto ${
-              isExpanded
-                ? "fixed z-[60] inset-0 md:m-auto md:w-[500px] md:h-[80vh] w-full h-full rounded-none md:rounded-2xl shadow-2xl"
-                : "absolute z-[60] bottom-[72px] right-0 w-[min(380px,calc(100vw-3rem))] h-[480px] rounded-2xl shadow-2xl"
-            }`}
+            className={`bg-white overflow-hidden border border-gray-100 flex flex-col pointer-events-auto ${isExpanded
+              ? "fixed z-[60] inset-0 md:m-auto md:w-[500px] md:h-[80vh] w-full h-full rounded-none md:rounded-2xl shadow-2xl"
+              : "absolute z-[60] bottom-[72px] right-0 w-[min(380px,calc(100vw-3rem))] h-[480px] rounded-2xl shadow-2xl"
+              }`}
           >
 
             <div className="bg-gradient-to-r from-green-600 to-green-700 px-4 py-3.5 flex justify-between items-center text-white shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shadow-sm">
-                  <Bot className="w-4 h-4 text-white" />
-                </div>
                 <div>
-                  <h3 className="font-semibold text-sm leading-tight">Health Assistant</h3>
+                  <h3 className="font-semibold text-sm leading-tight">CuraBot</h3>
                   <p className="text-[11px] text-white/75 leading-tight">Powered by your medical history</p>
                 </div>
               </div>
@@ -234,7 +242,7 @@ const FloatingChatWidget = () => {
             </div>
 
 
-            <div className="flex-1 p-4 overflow-y-auto bg-green-50/50 flex flex-col gap-3">
+            <div className="flex-1 p-4 overflow-y-auto overscroll-y-contain bg-green-50/50 flex flex-col gap-3">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
