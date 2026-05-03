@@ -1,8 +1,23 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircle, X, Send, Loader2, Bot } from "lucide-react";
+import { X, Send, Loader2, Bot } from "lucide-react";
+
+// ── Rotating prompts ──────────────────────────────────────────────────────────
+const PROMPTS = [
+  "Hey… missed me?",
+  "Got something bothering you?",
+  "Ask me anything",
+  "Still ignoring your health?",
+  "Quick checkup? I'm free.",
+  "Don't google it… ask me.",
+  "I might actually help, you know.",
+  "That headache again?",
+  "You look like you have questions.",
+  "Tap me. I dare you.",
+];
 
 type Role = "assistant" | "user";
 
@@ -32,45 +47,55 @@ const FloatingChatWidget = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [promptIdx, setPromptIdx] = useState(0);
+  const [showBubble, setShowBubble] = useState(false);
+  const promptTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Reveal bubble after 2.5 s, rotate every 4 s; pause while chat is open
+  useEffect(() => {
+    if (isOpen) {
+      setShowBubble(false);
+      if (promptTimerRef.current) clearInterval(promptTimerRef.current);
+      return;
+    }
+    const reveal = setTimeout(() => setShowBubble(true), 2500);
+    promptTimerRef.current = setInterval(
+      () => setPromptIdx((i) => (i + 1) % PROMPTS.length),
+      4000
+    );
+    return () => {
+      clearTimeout(reveal);
+      if (promptTimerRef.current) clearInterval(promptTimerRef.current);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 300);
-    }
+    if (isOpen) setTimeout(() => inputRef.current?.focus(), 300);
   }, [isOpen]);
 
-  const toggleChat = () => setIsOpen((prev) => !prev);
+  const toggleChat = () => setIsOpen((p) => !p);
 
   const sendMessage = async () => {
     const text = message.trim();
     if (!text || isLoading) return;
 
-    const userMsg: ChatMessage = {
-      id: uid(),
-      role: "user",
-      text,
-      timestamp: new Date(),
-    };
+    const userMsg: ChatMessage = { id: uid(), role: "user", text, timestamp: new Date() };
     setMessages((prev) => [...prev, userMsg]);
     setMessage("");
     setIsLoading(true);
 
-    // Placeholder streaming message
     const streamingId = uid();
-    const streamingMsg: ChatMessage = {
-      id: streamingId,
-      role: "assistant",
-      text: "",
-      timestamp: new Date(),
-      streaming: true,
-    };
-    setMessages((prev) => [...prev, streamingMsg]);
+    setMessages((prev) => [
+      ...prev,
+      { id: streamingId, role: "assistant", text: "", timestamp: new Date(), streaming: true },
+    ]);
 
     try {
       const token = localStorage.getItem("token");
@@ -84,52 +109,36 @@ const FloatingChatWidget = () => {
         },
         body: JSON.stringify({
           message: text,
-          // Send full conversation history so AI can maintain multi-turn context
           history: messages.map((m) => ({ role: m.role, text: m.text })),
         }),
       });
 
-      if (!response.ok || !response.body) {
-        throw new Error(`Server error: ${response.status}`);
-      }
+      if (!response.ok || !response.body) throw new Error(`Server error: ${response.status}`);
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let accumulated = "";
-
       setIsLoading(false);
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        accumulated += chunk;
-
+        accumulated += decoder.decode(value, { stream: true });
         setMessages((prev) =>
-          prev.map((m) =>
-            m.id === streamingId ? { ...m, text: accumulated } : m
-          )
+          prev.map((m) => (m.id === streamingId ? { ...m, text: accumulated } : m))
         );
-        // Scroll during streaming
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
       }
 
-      // Mark streaming as done
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === streamingId ? { ...m, streaming: false } : m
-        )
+        prev.map((m) => (m.id === streamingId ? { ...m, streaming: false } : m))
       );
-    } catch (err: any) {
+    } catch {
       setIsLoading(false);
       setMessages((prev) =>
         prev.map((m) =>
           m.id === streamingId
-            ? {
-                ...m,
-                text: "Sorry, I couldn't connect right now. Please try again in a moment.",
-                streaming: false,
-              }
+            ? { ...m, text: "Sorry, I couldn't connect right now. Please try again in a moment.", streaming: false }
             : m
         )
       );
@@ -143,32 +152,41 @@ const FloatingChatWidget = () => {
     }
   };
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // KEY FIX: use a zero-size fixed anchor (w-0 h-0).
+  // Every child is absolutely positioned from the same bottom-right corner,
+  // so adding/removing the chat panel NEVER triggers a layout shift on the button.
+  // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-      {}
+    <div className="fixed bottom-6 right-6 z-50 w-0 h-0">
+
+      {/* ── Chat panel ─────────────────────────────────────────────────────── */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 20, originX: 1, originY: 1 }}
+            initial={{ opacity: 0, scale: 0.92, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="mb-4 w-[350px] sm:w-[380px] max-w-[calc(100vw-3rem)] bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col pointer-events-auto"
-            style={{ height: "480px" }}
+            exit={{ opacity: 0, scale: 0.92, y: 8 }}
+            transition={{ type: "spring", damping: 26, stiffness: 320 }}
+            style={{
+              position: "absolute",
+              bottom: "72px",
+              right: 0,
+              width: "min(380px, calc(100vw - 3rem))",
+              height: "480px",
+              transformOrigin: "bottom right",
+            }}
+            className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col pointer-events-auto"
           >
-            {}
+            {/* Header */}
             <div className="bg-gradient-to-r from-green-600 to-green-700 px-4 py-3.5 flex justify-between items-center text-white shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shadow-sm">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-sm leading-tight">
-                    Health Assistant
-                  </h3>
-                  <p className="text-[11px] text-white/75 leading-tight">
-                    Powered by your medical history
-                  </p>
+                  <h3 className="font-semibold text-sm leading-tight">Health Assistant</h3>
+                  <p className="text-[11px] text-white/75 leading-tight">Powered by your medical history</p>
                 </div>
               </div>
               <button
@@ -180,26 +198,22 @@ const FloatingChatWidget = () => {
               </button>
             </div>
 
-            {}
+            {/* Messages */}
             <div className="flex-1 p-4 overflow-y-auto bg-green-50/50 flex flex-col gap-3">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex ${
-                    msg.role === "user" ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                      msg.role === "user"
-                        ? "bg-green-600 text-white rounded-br-sm shadow-sm"
-                        : "bg-white text-gray-700 border border-gray-100 shadow-sm rounded-bl-sm"
-                    }`}
+                    className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.role === "user"
+                      ? "bg-green-600 text-white rounded-br-sm shadow-sm"
+                      : "bg-white text-gray-700 border border-gray-100 shadow-sm rounded-bl-sm"
+                      }`}
                   >
                     {msg.text ? (
                       <p style={{ whiteSpace: "pre-wrap" }}>{msg.text}</p>
                     ) : (
-                      // Typing indicator for empty streaming messages
                       <div className="flex items-center gap-1.5 py-0.5">
                         <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
                         <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
@@ -211,11 +225,8 @@ const FloatingChatWidget = () => {
                     )}
                     {!msg.streaming && (
                       <span
-                        className={`text-[10px] mt-1 block ${
-                          msg.role === "user"
-                            ? "text-white/60 text-right"
-                            : "text-gray-400"
-                        }`}
+                        className={`text-[10px] mt-1 block ${msg.role === "user" ? "text-white/60 text-right" : "text-gray-400"
+                          }`}
                       >
                         {formatTime(msg.timestamp)}
                       </span>
@@ -223,11 +234,10 @@ const FloatingChatWidget = () => {
                   </div>
                 </div>
               ))}
-
               <div ref={bottomRef} />
             </div>
 
-            {}
+            {/* Input */}
             <div className="p-3 bg-white border-t border-gray-100 shrink-0">
               <div className="flex items-center bg-gray-50 rounded-full border border-gray-200 px-3 py-2 pr-1 focus-within:ring-1 focus-within:ring-green-600 focus-within:border-green-600 transition-all">
                 <input
@@ -241,20 +251,15 @@ const FloatingChatWidget = () => {
                   disabled={isLoading}
                 />
                 <button
-                  className={`p-2 rounded-full flex items-center justify-center transition-colors ${
-                    message.trim() && !isLoading
-                      ? "bg-green-600 text-white shadow-sm hover:bg-green-700"
-                      : "bg-gray-200 text-gray-400"
-                  }`}
+                  className={`p-2 rounded-full flex items-center justify-center transition-colors ${message.trim() && !isLoading
+                    ? "bg-green-600 text-white shadow-sm hover:bg-green-700"
+                    : "bg-gray-200 text-gray-400"
+                    }`}
                   disabled={!message.trim() || isLoading}
                   onClick={sendMessage}
                   aria-label="Send message"
                 >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -262,40 +267,150 @@ const FloatingChatWidget = () => {
         )}
       </AnimatePresence>
 
-      {}
-      <motion.button
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={toggleChat}
-        className="w-14 h-14 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-full shadow-xl flex items-center justify-center relative pointer-events-auto hover:from-green-700 hover:to-green-800 transition-colors"
-        aria-label={isOpen ? "Close chat" : "Open chat"}
-      >
-        <AnimatePresence mode="wait">
-          {isOpen ? (
-            <motion.div
-              key="close"
-              initial={{ rotate: -90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: 90, opacity: 0 }}
-              transition={{ duration: 0.15 }}
+      {/* ── CuraBot launcher (avatar + speech bubble) ──────────────────────── */}
+      <AnimatePresence>
+        {!isOpen && (
+          <motion.div
+            key="launcher"
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.6 }}
+            transition={{ type: "spring", damping: 20, stiffness: 280 }}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              right: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: "10px",
+              transformOrigin: "bottom right",
+            }}
+          >
+            {/* Speech bubble */}
+            <AnimatePresence>
+              {showBubble && (
+                <motion.button
+                  key="bubble"
+                  onClick={toggleChat}
+                  initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, y: 8 }}
+                  transition={{ type: "spring", damping: 20, stiffness: 320 }}
+                  className="relative cursor-pointer text-left"
+                  aria-label="Open CuraBot"
+                >
+                  <div
+                    className="rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[210px] border border-white/60"
+                    style={{
+                      background: "rgba(255,255,255,0.88)",
+                      backdropFilter: "blur(12px)",
+                      WebkitBackdropFilter: "blur(12px)",
+                      boxShadow: "0 6px 24px rgba(22,163,74,0.18), 0 1px 4px rgba(0,0,0,0.08)",
+                    }}
+                  >
+                    <AnimatePresence mode="wait">
+                      <motion.p
+                        key={promptIdx}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        transition={{ duration: 0.22 }}
+                        className="text-[13px] font-semibold text-gray-800 whitespace-nowrap leading-snug"
+                      >
+                        {PROMPTS[promptIdx]}
+                      </motion.p>
+                    </AnimatePresence>
+                    <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest mt-1">
+                      CuraBot
+                    </p>
+                  </div>
+                  {/* Tail */}
+                  <div
+                    className="absolute right-5 -bottom-[5px] w-2.5 h-2.5 rotate-45 border-b border-r border-white/60"
+                    style={{ background: "rgba(255,255,255,0.88)" }}
+                  />
+                </motion.button>
+              )}
+            </AnimatePresence>
+
+            {/* PNG avatar button */}
+            <motion.button
+              onClick={toggleChat}
+              aria-label="Open CuraBot chat"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              animate={{ y: [0, -6, 0] }}
+              transition={{ repeat: Infinity, duration: 3.2, ease: "easeInOut" }}
+              className="relative flex items-center justify-center cursor-pointer"
             >
-              <X className="w-6 h-6" />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="chat"
-              initial={{ rotate: 90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: -90, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <MessageCircle className="w-6 h-6" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.button>
+              {/* Glow pulse */}
+              <motion.div
+                className="absolute rounded-full pointer-events-none"
+                style={{ inset: "-6px" }}
+                animate={{
+                  boxShadow: [
+                    "0 0 0 0px rgba(34,197,94,0.55)",
+                    "0 0 0 14px rgba(34,197,94,0)",
+                  ],
+                }}
+                transition={{ repeat: Infinity, duration: 2.6, ease: "easeOut" }}
+              />
+              {/* Avatar */}
+              <div
+                className="relative w-[70px] h-[70px] sm:w-[64px] sm:h-[64px] rounded-full overflow-hidden"
+                style={{
+                  boxShadow: "0 8px 32px rgba(22,163,74,0.45), 0 2px 8px rgba(0,0,0,0.12)",
+                  border: "3px solid rgba(255,255,255,0.9)",
+                }}
+              >
+                <Image src="/chatbot.png" alt="CuraBot" fill className="object-cover" priority />
+              </div>
+              {/* Notification dot */}
+              <motion.div
+                className="absolute top-0 right-0 w-4 h-4 rounded-full border-2 border-white bg-yellow-400"
+                animate={{ scale: [1, 1.35, 1] }}
+                transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+              />
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Close FAB — pinned to same anchor, no layout influence ─────────── */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.button
+            key="close-fab"
+            initial={{ scale: 0, rotate: -90, opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+            exit={{ scale: 0, rotate: 90, opacity: 0 }}
+            transition={{ type: "spring", damping: 18, stiffness: 300 }}
+            onClick={toggleChat}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            aria-label="Close CuraBot chat"
+            style={{
+              position: "absolute",
+              bottom: 0,
+              right: 0,
+              width: "56px",
+              height: "56px",
+              borderRadius: "9999px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              background: "linear-gradient(135deg, #16a34a, #15803d)",
+              boxShadow: "0 6px 24px rgba(22,163,74,0.4)",
+              transformOrigin: "center",
+            }}
+          >
+            <X className="w-6 h-6" />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
