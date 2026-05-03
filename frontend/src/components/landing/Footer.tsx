@@ -38,7 +38,7 @@ const Footer = () => {
               </div>
             </div>
 
-            {}
+
 
             <div className="lg:col-span-8">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -66,7 +66,7 @@ const Footer = () => {
           </div>
         </div>
 
-        {}
+
 
         <div className="py-8 border-t border-green-700/50">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -90,7 +90,7 @@ const Footer = () => {
           </div>
         </div>
 
-        {}
+
 
         <div className="py-6 border-t border-green-700/50">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">

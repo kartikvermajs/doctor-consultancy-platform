@@ -5,7 +5,7 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Send, Loader2, Bot, Maximize2, Minimize2 } from "lucide-react";
 
-// ── Rotating prompts ──────────────────────────────────────────────────────────
+
 const PROMPTS = [
   "Hey… missed me?",
   "Got something bothering you?",
@@ -164,15 +164,15 @@ const FloatingChatWidget = () => {
     }
   };
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // KEY FIX: use a zero-size fixed anchor (w-0 h-0).
-  // Every child is absolutely positioned from the same bottom-right corner,
-  // so adding/removing the chat panel NEVER triggers a layout shift on the button.
-  // ─────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
   return (
     <div className="fixed bottom-6 right-6 z-50 w-0 h-0">
 
-      {/* ── Overlay ────────────────────────────────────────────────────────── */}
+
       <AnimatePresence>
         {isOpen && isExpanded && (
           <motion.div
@@ -186,7 +186,7 @@ const FloatingChatWidget = () => {
         )}
       </AnimatePresence>
 
-      {/* ── Chat panel ─────────────────────────────────────────────────────── */}
+
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -204,7 +204,7 @@ const FloatingChatWidget = () => {
                 : "absolute z-[60] bottom-[72px] right-0 w-[min(380px,calc(100vw-3rem))] h-[480px] rounded-2xl shadow-2xl"
             }`}
           >
-            {/* Header */}
+
             <div className="bg-gradient-to-r from-green-600 to-green-700 px-4 py-3.5 flex justify-between items-center text-white shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shadow-sm">
@@ -233,7 +233,7 @@ const FloatingChatWidget = () => {
               </div>
             </div>
 
-            {/* Messages */}
+
             <div className="flex-1 p-4 overflow-y-auto bg-green-50/50 flex flex-col gap-3">
               {messages.map((msg) => (
                 <div
@@ -272,7 +272,7 @@ const FloatingChatWidget = () => {
               <div ref={bottomRef} />
             </div>
 
-            {/* Input */}
+
             <div className="p-3 bg-white border-t border-gray-100 shrink-0">
               <div className="flex items-center bg-gray-50 rounded-full border border-gray-200 px-3 py-2 pr-1 focus-within:ring-1 focus-within:ring-green-600 focus-within:border-green-600 transition-all">
                 <input
@@ -302,7 +302,7 @@ const FloatingChatWidget = () => {
         )}
       </AnimatePresence>
 
-      {/* ── CuraBot launcher (avatar + speech bubble) ──────────────────────── */}
+
       <AnimatePresence>
         {!isOpen && (
           <motion.div
@@ -322,7 +322,7 @@ const FloatingChatWidget = () => {
               transformOrigin: "bottom right",
             }}
           >
-            {/* Speech bubble */}
+
             <AnimatePresence>
               {showBubble && (
                 <motion.button
@@ -356,7 +356,7 @@ const FloatingChatWidget = () => {
                       </motion.p>
                     </AnimatePresence>
                   </div>
-                  {/* Tail */}
+
                   <div
                     className="absolute right-5 -bottom-[5px] w-2.5 h-2.5 rotate-45 border-b border-r border-green-200/60 bg-green-50/95"
                   />
@@ -364,7 +364,7 @@ const FloatingChatWidget = () => {
               )}
             </AnimatePresence>
 
-            {/* PNG avatar button */}
+
             <motion.button
               onClick={toggleChat}
               aria-label="Open CuraBot chat"
@@ -374,7 +374,7 @@ const FloatingChatWidget = () => {
               transition={{ repeat: Infinity, duration: 3.2, ease: "easeInOut" }}
               className="relative flex items-center justify-center cursor-pointer"
             >
-              {/* Glow pulse */}
+
               <motion.div
                 className="absolute rounded-full pointer-events-none"
                 style={{ inset: "-6px" }}
@@ -386,7 +386,7 @@ const FloatingChatWidget = () => {
                 }}
                 transition={{ repeat: Infinity, duration: 2.6, ease: "easeOut" }}
               />
-              {/* Avatar */}
+
               <div
                 className="relative w-[70px] h-[70px] sm:w-[64px] sm:h-[64px] rounded-full overflow-hidden"
                 style={{
@@ -396,7 +396,7 @@ const FloatingChatWidget = () => {
               >
                 <Image src="/chatbot.png" alt="CuraBot" fill className="object-cover" priority />
               </div>
-              {/* Notification dot */}
+
               <motion.div
                 className="absolute top-0 right-0 w-4 h-4 rounded-full border-2 border-white bg-yellow-400"
                 animate={{ scale: [1, 1.35, 1] }}
@@ -407,7 +407,7 @@ const FloatingChatWidget = () => {
         )}
       </AnimatePresence>
 
-      {/* ── Close FAB — pinned to same anchor, no layout influence ─────────── */}
+
       <AnimatePresence>
         {isOpen && (
           <motion.button

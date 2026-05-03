@@ -10,12 +10,12 @@ interface AuthState {
   error: string | null;
   isAuthenticated: boolean;
 
-  
+
   setUser: (user: User, token: string) => void;
   clearError: () => void;
   logout: () => void;
 
-  
+
   loginDoctor: (email: string, password: string) => Promise<void>;
   loginPatient: (email: string, password: string) => Promise<void>;
   registerDoctor: (data: any) => Promise<void>;

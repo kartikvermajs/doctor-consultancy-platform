@@ -23,7 +23,7 @@ import { useUploadThing } from "@/lib/uploadthing";
 
 const isPdf = (mimetype?: string, url?: string): boolean => {
   if (mimetype) return mimetype === "application/pdf";
-  
+
   return url?.includes("/raw/upload/") ?? false;
 };
 
@@ -31,7 +31,7 @@ const buildDownloadUrl = (url: string): string => {
   if (url.includes("cloudinary.com")) {
     return url.replace("/upload/", "/upload/fl_attachment/");
   }
-  
+
   return url;
 };
 
@@ -69,7 +69,6 @@ const Lightbox = ({
   const isDocPdf = isPdf(doc.mimetype, doc.url);
   const filename = getFilename(doc.url, doc.key);
 
-  
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -81,7 +80,7 @@ const Lightbox = ({
       className="fixed inset-0 z-[60] flex flex-col bg-black/90 backdrop-blur-sm"
       onClick={onClose}
     >
-      {}
+
       <div
         className="flex items-center justify-between px-6 py-3 bg-black/60 shrink-0"
         onClick={(e) => e.stopPropagation()}
@@ -117,7 +116,6 @@ const Lightbox = ({
         </div>
       </div>
 
-      {}
       <div
         className="flex-1 flex items-center justify-center overflow-hidden p-4"
         onClick={onClose}
@@ -130,7 +128,7 @@ const Lightbox = ({
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          
+
           <img
             src={doc.url}
             alt={filename}
@@ -163,7 +161,6 @@ const DocCard = ({
   return (
     <div className="group relative flex flex-col border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all duration-200">
 
-      {/* Thumbnail / preview area */}
       <div
         className="relative h-32 bg-gray-50 flex items-center justify-center cursor-pointer overflow-hidden"
         onClick={onPreview}
@@ -182,12 +179,10 @@ const DocCard = ({
           />
         )}
 
-        {/* Hover overlay */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
           <Eye className="w-7 h-7 text-white drop-shadow" />
         </div>
 
-        {/* Delete button — top-right corner of thumbnail, doctor only */}
         {userType === "doctor" && (
           <button
             className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-red-50 border border-red-200 text-red-500 hover:text-red-700 rounded-full p-1 shadow-sm"
@@ -204,14 +199,12 @@ const DocCard = ({
         )}
       </div>
 
-      {/* Filename */}
       <div className="px-3 py-1.5 min-w-0">
         <p className="text-xs text-gray-500 truncate" title={filename}>
           {filename}
         </p>
       </div>
 
-      {/* Action buttons — always two columns, never crowded */}
       <div className="px-3 pb-3 grid grid-cols-2 gap-2">
         <Button
           size="sm"
@@ -243,7 +236,6 @@ const DocCard = ({
     </div>
   );
 };
-
 
 const PrescriptionViewModal = ({
   appointment,
@@ -301,7 +293,6 @@ const PrescriptionViewModal = ({
     }
   };
 
-
   const { startUpload: startPdfUpload, isUploading: utUploading } = useUploadThing(
     "prescriptionPdf",
     {
@@ -318,8 +309,6 @@ const PrescriptionViewModal = ({
   const documents = appointment.documents ?? [];
   const otherUser =
     userType === "doctor" ? appointment.patientId : appointment.doctorId;
-
-  
 
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("en-US", {
@@ -343,7 +332,6 @@ const PrescriptionViewModal = ({
 
   const closeLightbox = useCallback(() => setLightboxDoc(null), []);
 
-  
   const submitPdfUpload = async () => {
     if (!pdfFiles.length) return;
     setUploadingPdf(true);
@@ -351,7 +339,6 @@ const PrescriptionViewModal = ({
       const results = await startPdfUpload(pdfFiles);
       if (!results?.length) throw new Error("UploadThing returned no results");
 
-      
       await Promise.all(
         results.map((file) =>
           postWithAuth(`/appointments/${appointment._id}/documents/register`, {
@@ -374,7 +361,6 @@ const PrescriptionViewModal = ({
     }
   };
 
-  
   const submitImageUpload = async () => {
     if (!imageFiles.length) return;
     const form = new FormData();
@@ -392,8 +378,6 @@ const PrescriptionViewModal = ({
     }
   };
 
-  
-
   const confirmDelete = async (key: string) => {
     const ok = confirm("Delete this document permanently?");
     if (!ok) return;
@@ -410,8 +394,6 @@ const PrescriptionViewModal = ({
     }
   };
 
-  
-
   const localPdfPreviews = pdfFiles.map((file) => ({ file }));
 
   const localImagePreviews = imageFiles.map((file) => ({
@@ -419,26 +401,22 @@ const PrescriptionViewModal = ({
     preview: URL.createObjectURL(file),
   }));
 
-  
-
   return (
     <>
-      {}
+
       <span onClick={() => setIsOpen(true)} className="cursor-pointer">
         {trigger}
       </span>
 
-      {}
       {lightboxDoc && <Lightbox doc={lightboxDoc} onClose={closeLightbox} />}
 
-      {}
       {isOpen && (
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
       >
           <Card className="w-full max-w-4xl max-h-[92vh] overflow-y-auto shadow-2xl border-0">
-            {}
+
             <CardHeader className="flex flex-row justify-between items-center border-b bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-xl">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-100 rounded-lg">
@@ -489,7 +467,7 @@ const PrescriptionViewModal = ({
             </CardHeader>
 
             <CardContent className="space-y-6 pt-6">
-              {}
+
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                 <div>
                   <p className="font-semibold text-gray-900">
@@ -507,7 +485,6 @@ const PrescriptionViewModal = ({
                 </div>
               </div>
 
-              {}
               {appointment.prescriptionText && (
                 <div className="border border-green-200 bg-green-50 rounded-xl overflow-hidden">
                   <div className="flex items-center gap-2 px-4 py-2 bg-green-100/70 border-b border-green-200">
@@ -522,7 +499,6 @@ const PrescriptionViewModal = ({
                 </div>
               )}
 
-              {}
               {appointment.notes && (
                 <div className="border border-gray-200 bg-gray-50 rounded-xl overflow-hidden">
                   <div className="px-4 py-2 bg-gray-100 border-b border-gray-200">
@@ -536,7 +512,6 @@ const PrescriptionViewModal = ({
                 </div>
               )}
 
-              {}
               {documents.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -570,7 +545,6 @@ const PrescriptionViewModal = ({
                 </div>
               )}
 
-              {}
               {documents.length === 0 && !appointment.prescriptionText && !appointment.notes && (
                 <div className="text-center py-10 text-gray-400">
                   <FileText className="w-10 h-10 mx-auto mb-2 opacity-30" />
@@ -662,7 +636,6 @@ const PrescriptionViewModal = ({
                 </div>
               )}
 
-              {}
               {userType === "doctor" && (
                 <div className="border-t pt-5 space-y-6">
                   <h3 className="font-semibold text-gray-900 flex items-center gap-2">
@@ -670,7 +643,6 @@ const PrescriptionViewModal = ({
                     Add Documents
                   </h3>
 
-                  {}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <FileText className="w-4 h-4 text-blue-600" />
@@ -694,7 +666,6 @@ const PrescriptionViewModal = ({
                       />
                     </label>
 
-                    {}
                     {localPdfPreviews.length > 0 && (
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {localPdfPreviews.map(({ file }, i) => (
@@ -723,7 +694,6 @@ const PrescriptionViewModal = ({
                       </div>
                     )}
 
-                    {}
                     {(uploadingPdf || utUploading) && (
                       <div className="w-full bg-blue-100 rounded-full h-1.5">
                         <div
@@ -754,7 +724,6 @@ const PrescriptionViewModal = ({
                     )}
                   </div>
 
-                  {}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <ImageIcon className="w-4 h-4 text-green-600" />
@@ -778,7 +747,6 @@ const PrescriptionViewModal = ({
                       />
                     </label>
 
-                    {}
                     {localImagePreviews.length > 0 && (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         {localImagePreviews.map(({ file, preview }, i) => (
@@ -787,7 +755,7 @@ const PrescriptionViewModal = ({
                             className="relative border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm"
                           >
                             <div className="h-24 bg-gray-50">
-                              {}
+
                               <img
                                 src={preview}
                                 alt={file.name}

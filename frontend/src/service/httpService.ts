@@ -36,9 +36,7 @@ class HttpService {
         ...options?.headers,
       };
 
-      
-      
-      
+
       if (!isFormData) {
         headers["Content-Type"] = "application/json";
       }
@@ -67,7 +65,7 @@ class HttpService {
     }
   }
 
-  
+
 
   async getWithAuth<T = any>(
     endPoint: string,
@@ -99,7 +97,7 @@ class HttpService {
     return this.makeRequest<T>(endPoint, "DELETE", undefined, true, options);
   }
 
-  
+
 
   async postWithoutAuth<T = any>(
     endPoint: string,
@@ -116,7 +114,7 @@ class HttpService {
     return this.makeRequest<T>(endPoint, "GET", undefined, false, options);
   }
 
-  
+
 
   async postFormWithAuth<T = any>(
     endPoint: string,

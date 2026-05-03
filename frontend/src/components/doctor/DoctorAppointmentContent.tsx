@@ -44,7 +44,7 @@ const ReviewStars = ({ appointmentId }: { appointmentId: string }) => {
 
   return (
     <div className="space-y-1.5 mt-1">
-      {}
+
       <div className="flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((s) => (
           <Star
@@ -59,7 +59,7 @@ const ReviewStars = ({ appointmentId }: { appointmentId: string }) => {
         <span className="text-xs text-gray-500 ml-1">{rating}/5</span>
       </div>
 
-      {}
+
       {comment && (
         <p className="text-xs text-gray-500 italic bg-gray-50 border border-gray-100 rounded-lg px-3 py-1.5 line-clamp-2">
           &ldquo;{comment}&rdquo;
@@ -80,14 +80,14 @@ const DoctorAppointmentContent = () => {
     const tab = searchParams?.get("tab");
     return tab === "past" ? "past" : "upcoming";
   });
-  
+
   useEffect(() => {
     if (user?.type === "doctor") {
       fetchAppointments("doctor");
     }
   }, [user, fetchAppointments]);
 
-  
+
   const upcomingAppointments = React.useMemo(() => {
     const now = new Date();
     return appointments.filter((apt) => {
@@ -109,7 +109,7 @@ const DoctorAppointmentContent = () => {
     });
   }, [appointments]);
 
-  
+
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("en-US", {
       weekday: "long",
@@ -264,7 +264,7 @@ const DoctorAppointmentContent = () => {
   );
 };
 
-  
+
   const EmptyState = ({ tab }: { tab: Tab }) => {
     const state = emptyStates[EMPTY_STATE_KEY_MAP[tab]];
     const Icon = state.icon;
@@ -280,7 +280,7 @@ const DoctorAppointmentContent = () => {
     );
   };
 
-  
+
   return (
     <>
       <Header showDashboardNav />

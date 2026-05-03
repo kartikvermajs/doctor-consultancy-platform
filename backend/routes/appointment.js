@@ -7,7 +7,6 @@ const { generateEmbedding, aiFilterPrescriptions } = require("../services/aiServ
 
 const router = express.Router();
 
-// Helper for Cosine Similarity
 const cosineSimilarity = (vecA, vecB) => {
   let dotProduct = 0, normA = 0, normB = 0;
   for (let i = 0; i < vecA.length; i++) {
@@ -33,12 +32,11 @@ router.get(
         status: "Completed",
         embedding: { $exists: true, $not: { $size: 0 } }
       };
-      
+
       if (patientId) {
         filter.patientId = patientId;
       }
 
-      // Fetch the last 200 completed appointments with embeddings for this filter
       const appointments = await Appointment.find(filter)
         .sort({ slotStartIso: -1 })
         .limit(200)
@@ -53,7 +51,6 @@ router.get(
       let topResults = [];
       let aiSuccess = false;
 
-      // 1. AI-First Search Approach
       try {
         const matchedIds = await aiFilterPrescriptions(query, appointments);
         if (matchedIds && Array.isArray(matchedIds)) {
@@ -64,7 +61,6 @@ router.get(
         console.warn("[search-prescriptions] AI search failed, falling back to semantic search:", aiError.message);
       }
 
-      // 2. Semantic Fallback
       if (!aiSuccess) {
         console.log("[search-prescriptions] Running semantic fallback...");
         const queryEmbedding = await generateEmbedding(query);
@@ -76,12 +72,12 @@ router.get(
 
         const results = appointments.map((apt) => {
           const similarity = apt.embedding && apt.embedding.length > 0 ? cosineSimilarity(queryEmbedding, apt.embedding) : 0;
-          
+
           let keywordBonus = 0;
           if (apt.prescriptionText && apt.prescriptionText.toLowerCase().includes(lowerQuery)) keywordBonus += 0.15;
           if (apt.symptoms && apt.symptoms.toLowerCase().includes(lowerQuery)) keywordBonus += 0.1;
           if (apt.notes && apt.notes.toLowerCase().includes(lowerQuery)) keywordBonus += 0.1;
-          
+
           const finalScore = similarity + keywordBonus;
           return { ...apt, score: finalScore };
         });
@@ -304,7 +300,7 @@ Symptoms: ${appointment.symptoms || "None"}
 Diagnosis/Notes: ${appointment.notes || "None"}
 Prescription: ${appointment.prescriptionText || "None"}
     `.trim();
-    
+
     try {
       const embedding = await generateEmbedding(combinedText);
       if (embedding && embedding.length > 0) {

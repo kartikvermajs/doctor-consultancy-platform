@@ -12,10 +12,9 @@ const handleChatMessage = async (req, res) => {
   const userRole = req.auth.type;
   const userName = req.user?.name?.trim() || "there";
 
-  // Set SSE / chunked transfer headers BEFORE building context
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.setHeader("Transfer-Encoding", "chunked");
-  res.setHeader("X-Accel-Buffering", "no"); // Disable nginx buffering if present
+  res.setHeader("X-Accel-Buffering", "no"); 
   res.flushHeaders();
 
   try {
@@ -26,7 +25,6 @@ const handleChatMessage = async (req, res) => {
       context = await buildPatientContext(userId);
     }
 
-    // Pass history for multi-turn conversational context (exclude the current message — it's passed separately)
     const historyWithoutCurrent = Array.isArray(history) ? history.slice(0, -1) : [];
 
     await generateReplyStream(context, message.trim(), userName, res, historyWithoutCurrent);

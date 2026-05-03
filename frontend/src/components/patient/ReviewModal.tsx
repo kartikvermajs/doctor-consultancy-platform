@@ -68,7 +68,6 @@ const ReviewModal = ({ appointment, trigger }: ReviewModalProps) => {
 
   const doctorName = appointment.doctorId?.name ?? "Doctor";
 
-  
   useEffect(() => {
     if (!isOpen) return;
     setChecking(true);
@@ -116,7 +115,7 @@ const ReviewModal = ({ appointment, trigger }: ReviewModalProps) => {
       {isOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-md shadow-2xl border-0">
-            {}
+
             <CardHeader className="flex flex-row justify-between items-start border-b bg-gradient-to-r from-yellow-50 to-amber-50 rounded-t-xl pb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-yellow-100 rounded-xl">
@@ -135,14 +134,13 @@ const ReviewModal = ({ appointment, trigger }: ReviewModalProps) => {
             </CardHeader>
 
             <CardContent className="pt-6 space-y-6">
-              {}
+
               {checking && (
                 <div className="flex justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
                 </div>
               )}
 
-              {}
               {!checking && alreadyReviewed && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-xl p-3">
@@ -152,7 +150,6 @@ const ReviewModal = ({ appointment, trigger }: ReviewModalProps) => {
                     </span>
                   </div>
 
-                  {}
                   {existingReview && (
                     <div className="space-y-3">
                       <div className="flex justify-center gap-1">
@@ -194,7 +191,6 @@ const ReviewModal = ({ appointment, trigger }: ReviewModalProps) => {
                 </div>
               )}
 
-              {}
               {!checking && !alreadyReviewed && submitted && (
                 <div className="text-center space-y-4 py-4">
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
@@ -229,10 +225,9 @@ const ReviewModal = ({ appointment, trigger }: ReviewModalProps) => {
                 </div>
               )}
 
-              {}
               {!checking && !alreadyReviewed && !submitted && (
                 <div className="space-y-5">
-                  {}
+
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
                     <Avatar className="w-10 h-10">
                       <AvatarImage
@@ -252,7 +247,6 @@ const ReviewModal = ({ appointment, trigger }: ReviewModalProps) => {
                     </div>
                   </div>
 
-                  {}
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700 text-center">
                       How was your experience?
@@ -265,7 +259,6 @@ const ReviewModal = ({ appointment, trigger }: ReviewModalProps) => {
                     )}
                   </div>
 
-                  {}
                   <div className="space-y-2">
                     <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
                       <MessageSquare className="w-3.5 h-3.5" />
@@ -287,7 +280,6 @@ const ReviewModal = ({ appointment, trigger }: ReviewModalProps) => {
                     </p>
                   </div>
 
-                  {}
                   <div className="flex gap-2 pt-1">
                     <Button
                       variant="outline"

@@ -14,11 +14,11 @@ interface DoctorState {
     total: number;
   };
 
-  
+
   clearError: () => void;
   setCurrentDoctor: (doctor: Doctor) => void;
 
-  
+
   fetchDoctors: (filters: DoctorFilters) => Promise<void>;
   fetchDoctorById: (id: string) => Promise<void>;
   fetchDashboard: (period?:string) => Promise<void>
@@ -91,5 +91,5 @@ export const useDoctorStore = create<DoctorState>((set, get) => ({
     }
   },
 
-  
+
 }));

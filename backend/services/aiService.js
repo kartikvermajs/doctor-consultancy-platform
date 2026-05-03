@@ -88,7 +88,6 @@ const buildMessages = (context, userMessage, patientName, history = []) => {
     });
   }
 
-  // Inject prior conversation turns for multi-turn context (last 10 turns max)
   const recentHistory = history.slice(-10);
   for (const turn of recentHistory) {
     if (turn.role === "user" || turn.role === "assistant") {
@@ -124,7 +123,7 @@ const tryModelsStream = async (client, models, messages, label, res) => {
     try {
       console.log(`[aiService] ${label} → ${model}`);
       const stream = await client.chat.completions.create({ model, messages, stream: true });
-      
+
       console.log(`[aiService] ✓ ${label} ${model} (Streaming)`);
       for await (const chunk of stream) {
         const text = chunk.choices[0]?.delta?.content || "";
@@ -207,9 +206,9 @@ Example output: ["60d5ecb8b392d700153f3a12", "60d5ecb8b392d700153f3a13"]
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text().trim();
-    
+
     const cleanedText = responseText.replace(/```json/gi, "").replace(/```/g, "").trim();
-    
+
     const ids = JSON.parse(cleanedText);
     if (!Array.isArray(ids)) {
       throw new Error("AI did not return an array");

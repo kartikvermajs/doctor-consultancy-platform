@@ -22,7 +22,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Link from "next/link";
 import DoctorReviewModal from "./DoctorReviewModal";
 
-/* ── Star renderer (filled / partial / empty) ── */
 const StarRating = ({ rating, count }: { rating: number | null; count: number }) => {
   const val = rating ?? 0;
   return (
@@ -338,7 +337,6 @@ const DoctorListPage = () => {
                       {doctor.experience} years experience
                     </p>
 
-                    {/* ── Dynamic star rating ── */}
                     <StarRating rating={doctor.avgRating} count={doctor.totalReviews} />
                   </div>
 
@@ -375,7 +373,7 @@ const DoctorListPage = () => {
                   </div>
 
                   <div className="mt-auto">
-                    {/* Stop propagation so clicking Book doesn't open the modal */}
+
                     <Link
                       href={`/patient/booking/${doctor._id}`}
                       className="block"
@@ -402,7 +400,6 @@ const DoctorListPage = () => {
         )}
       </div>
 
-      {/* ── Review Modal ── */}
       <DoctorReviewModal
         doctor={selectedDoctor}
         open={!!selectedDoctor}

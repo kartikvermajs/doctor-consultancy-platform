@@ -33,7 +33,6 @@ interface Props {
   onClose: () => void;
 }
 
-/* ── Helpers ── */
 const StarRating = ({
   rating,
   size = "sm",
@@ -49,9 +48,9 @@ const StarRating = ({
         const partial = !filled && rating > s - 1;
         return (
           <span key={s} className="relative inline-block">
-            {/* empty star */}
+
             <Star className={`${px} text-gray-200`} fill="currentColor" />
-            {/* overlay */}
+
             {(filled || partial) && (
               <span
                 className="absolute inset-0 overflow-hidden"
@@ -74,7 +73,6 @@ const formatDate = (iso: string) =>
     year: "numeric",
   });
 
-/* ── Component ── */
 const DoctorReviewModal: React.FC<Props> = ({ doctor, open, onClose }) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
@@ -90,7 +88,6 @@ const DoctorReviewModal: React.FC<Props> = ({ doctor, open, onClose }) => {
 
   if (!doctor) return null;
 
-  // Use prop values if available (from doctor list), else compute from fetched reviews
   const displayRating =
     doctor.avgRating != null
       ? doctor.avgRating
@@ -105,7 +102,7 @@ const DoctorReviewModal: React.FC<Props> = ({ doctor, open, onClose }) => {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg w-full p-0 overflow-hidden rounded-2xl">
-        {/* ── Header ── */}
+
         <div className="bg-gradient-to-br from-green-50 to-white px-6 pt-6 pb-4">
           <DialogHeader>
             <div className="flex items-center gap-4">
@@ -143,7 +140,6 @@ const DoctorReviewModal: React.FC<Props> = ({ doctor, open, onClose }) => {
 
         <Separator />
 
-        {/* ── Review List ── */}
         <ScrollArea className="max-h-[400px] px-6 py-4">
           {loading ? (
             <div className="space-y-4">

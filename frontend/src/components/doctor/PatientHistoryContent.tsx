@@ -41,7 +41,7 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
   const filteredHistory = useMemo(() => {
     if (!searchQuery) return patientHistory;
     if (aiResults) return aiResults;
-    // Fallback while typing/searching
+
     const lowerQuery = searchQuery.toLowerCase();
     return patientHistory.filter(
       (apt) =>
@@ -69,7 +69,7 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
       try {
         const results = await searchPatientPrescriptions(patientId, trimmedQuery);
         searchCache.current[trimmedQuery] = results;
-        // Only set results if the query hasn't changed while awaiting
+
         if (searchQuery.trim() === trimmedQuery) {
           setAiResults(results);
         }
@@ -80,7 +80,7 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
           setIsSearching(false);
         }
       }
-    }, 400); // 400ms debounce
+    }, 400); 
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery, patientId, searchPatientPrescriptions]);
@@ -95,11 +95,9 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
     });
   };
 
-  // Simple parser to extract medicines from prescriptionText
-  // Assuming a common format or just falling back to lines
   const parseMedicines = (text: string) => {
     if (!text) return [];
-    // Just split by newlines and filter out empty ones
+
     return text.split("\n").map(line => line.trim()).filter(line => line.length > 0);
   };
 
@@ -109,7 +107,7 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
 
       <div className="min-h-screen bg-gray-50 flex flex-col pt-16">
         <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-8">
-        {/* Header Section */}
+
         {loading && !patientInfo ? (
           <div className="mb-8">
             <div className="flex items-center gap-4 animate-pulse">
@@ -140,7 +138,7 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
 
         {/* Semantic Search Bar */}
         <div className="mb-10 flex items-center gap-4 max-w-3xl mx-auto">
-          {/* Back Button */}
+
           <button
             onClick={() => router.push("/doctor/appointments?tab=past")}
             className="p-3 bg-white rounded-full border border-gray-200 shadow-sm hover:shadow-md hover:bg-gray-50 transition-all text-gray-600 hover:text-gray-900 shrink-0"
@@ -168,7 +166,6 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
           </div>
         </div>
 
-        {/* Prescription List Section */}
         <div className="space-y-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 px-1">Prescription History</h2>
 
@@ -198,12 +195,12 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
             <div className="relative border-l-2 border-gray-100 ml-4 md:ml-6 space-y-8 pb-10">
               {filteredHistory.map((apt) => (
                 <div key={apt._id} className="relative pl-6 md:pl-8 group">
-                  {/* Timeline Dot */}
+
                   <div className="absolute w-4 h-4 bg-white border-2 border-green-500 rounded-full -left-[9px] top-5 group-hover:scale-125 group-hover:bg-green-50 transition-all shadow-sm" />
-                  
+
                   <Card className="border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden bg-white/90 backdrop-blur-sm">
                     <CardContent className="p-0">
-                      {/* Card Header (Date) */}
+
                       <div className="bg-gray-50/80 px-5 py-3 border-b border-gray-100 flex items-center justify-between">
                         <div className="flex items-center text-sm font-medium text-gray-700">
                           <Calendar className="w-4 h-4 mr-2 text-gray-400" />
@@ -216,10 +213,8 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
                         )}
                       </div>
 
-                      {/* Card Body */}
                       <div className="p-5 md:p-6 space-y-5">
-                        
-                        {/* Symptoms / Notes */}
+
                         {(apt.symptoms || apt.notes) && (
                           <div>
                             <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Diagnosis & Notes</h4>
@@ -229,7 +224,6 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
                           </div>
                         )}
 
-                        {/* Medicines */}
                         {apt.prescriptionText && (
                           <div>
                             <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center">
@@ -246,7 +240,6 @@ const PatientHistoryContent: React.FC<Props> = ({ patientId }) => {
                           </div>
                         )}
 
-                        {/* Fallback if nothing */}
                         {!apt.prescriptionText && !apt.symptoms && !apt.notes && (
                            <p className="text-sm text-gray-400 italic">No detailed records available for this session.</p>
                         )}

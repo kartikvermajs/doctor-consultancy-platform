@@ -51,7 +51,7 @@ const CalendarStep = ({
     const selectedDay = new Date(selectedDate);
     selectedDay.setHours(0, 0, 0, 0);
 
-    
+
     if (selectedDay.getTime() === today.getTime()) {
       const [time, modifier] = slot.split(" ");
       let [hour, minutes] = time.split(":");
@@ -86,11 +86,11 @@ const CalendarStep = ({
 
     if(checkedDate< today) return true;
 
-    
+
     const ymd = toLocalYMD(date);
     if(!availableDates.includes(ymd)) return true;
 
-    
+
     const jsWeekday = date.getDay();  
     return excludedWeekdays.includes(jsWeekday)
   }
@@ -121,7 +121,7 @@ const CalendarStep = ({
                </div>
 
 
-              {}
+
               <div>
                 <Label className="text-base font-semibold mb-4 block">
                   Available Time Slots
@@ -141,7 +141,7 @@ const CalendarStep = ({
                           const isBooked = isSlotBooked(slot);
                           const isPast = isSlotInPast(slot);
                           const isDisabled = isBooked || isPast;
-                          
+
 
                           return (
                              <Button
@@ -178,7 +178,7 @@ const CalendarStep = ({
                           {showMoreSlots ? 'Show Less' : `+ ${availableSlots.length -10} show more`}
                         </Button>
                       )}
-              
+
                       </div>
 
 

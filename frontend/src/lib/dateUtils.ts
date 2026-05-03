@@ -7,7 +7,7 @@
   };
 
   export const convertTo24Hour = (time12h: string): string => {
-    
+
     const [time, modifier] = time12h.split(' ');
     let [hours, minutes] = time.split(':');
     if (hours === '12') hours = '00';
@@ -16,7 +16,7 @@
   };
 
 
-  
+
 export const toLocalYMD = (date: Date): string => {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');

@@ -10,7 +10,6 @@ const getAuth = (req: Request) => {
 };
 
 export const ourFileRouter = {
-  
 
   prescriptionPdf: f({
     pdf: {
@@ -21,13 +20,12 @@ export const ourFileRouter = {
     .middleware(async ({ req }) => {
       const token = getAuth(req);
       if (!token) throw new UploadThingError("Unauthorized — no token");
-      
-      
+
       return { token };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       console.log("[UploadThing] PDF uploaded:", file.ufsUrl);
-      
+
       return {
         url: file.ufsUrl,
         key: file.key,

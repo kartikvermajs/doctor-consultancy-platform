@@ -79,7 +79,7 @@ router.get(
         Doctor.countDocuments(filter),
       ]);
 
-      // Attach real rating stats for each doctor
+
       const doctorIds = doctors.map((d) => d._id);
       const ratingAgg = await Review.aggregate([
         { $match: { doctorId: { $in: doctorIds } } },
@@ -173,7 +173,7 @@ router.get(
       const doctorId = req.auth.id;
       const now = new Date();
 
-      
+
       const startOfDay = new Date(
         now.getFullYear(),
         now.getMonth(),
@@ -195,7 +195,7 @@ router.get(
         return res.notFound("Doctor not found");
       }
 
-      
+
       const todayAppointments = await Appointment.find({
         doctorId,
         slotStartIso: { $gte: startOfDay, $lte: endOfDay },
@@ -205,7 +205,7 @@ router.get(
         .populate("doctorId", "name fees profileImage specialization")
         .sort({ slotStartIso: 1 });
 
-      
+
       const upcomingAppointments = await Appointment.find({
         doctorId,
         slotStartIso: { $gt: endOfDay },
@@ -228,7 +228,7 @@ router.get(
         0
       );
 
-      
+
       const ratingAgg = await Review.aggregate([
         { $match: { doctorId: new (require("mongoose").Types.ObjectId)(doctorId) } },
         {
@@ -246,7 +246,7 @@ router.get(
           : 0;
       const totalReviews = ratingAgg.length > 0 ? ratingAgg[0].totalReviews : 0;
 
-      
+
       const recentReviews = await Review.find({ doctorId })
         .populate("patientId", "name profileImage email")
         .populate("appointmentId", "_id slotStartIso consultationType")
@@ -254,7 +254,7 @@ router.get(
         .limit(5)
         .lean();
 
-      
+
       const completionRate =
         totalAppointmentCount > 0
           ? Math.round((completedAppointmentCount / totalAppointmentCount) * 100)

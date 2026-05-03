@@ -103,10 +103,10 @@ router.post('/doctor/register',
 
 
 
- 
 
 
- 
+
+
  router.post('/profile-picture', authenticate, profilePictureUpload.single('image'), async (req, res) => {
     try {
         if (!req.file) {
@@ -159,7 +159,7 @@ router.post('/doctor/register',
              const token = signToken(user._id,type);
 
 
-             
+
              const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
              const redirectUrl = `${frontendUrl}/auth/success?token=${token}&type=${type}&user=${encodeURIComponent(JSON.stringify({
                 id: user._id,
@@ -176,7 +176,7 @@ router.post('/doctor/register',
  )
 
 
- 
+
  router.get('/failure', (req,res) => res.badRequest('Google authentication Failed'))
 
 

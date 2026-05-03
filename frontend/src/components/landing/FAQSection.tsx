@@ -25,7 +25,7 @@ const FAQSection = () => {
           </div>
         </div>
 
-        {}
+
 
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-primary text-center mb-12">

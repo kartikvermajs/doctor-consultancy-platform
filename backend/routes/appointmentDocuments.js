@@ -13,13 +13,13 @@ router.post(
   "/:appointmentId/documents",
   auth.authenticate,
 
-  
+
   (req, res, next) => {
     console.log("▶ [UPLOAD] Multer upload started");
 
     let responded = false;
 
-    
+
     const timeout = setTimeout(() => {
       if (!responded) {
         responded = true;
@@ -49,7 +49,7 @@ router.post(
     });
   },
 
-  
+
   async (req, res) => {
     try {
       console.log("▶ [UPLOAD] Handler started");
@@ -155,13 +155,13 @@ router.delete(
 
       const { appointmentId, key } = req.params;
 
-      
+
       const appointment = await Appointment.findById(appointmentId);
       const doc = appointment?.documents?.find((d) => d.key === key);
 
       console.log("🗑 [DELETE] Deleting document:", key);
 
-      
+
       if (doc && !doc.url?.includes("uploadthing.com") && !doc.url?.includes("ufs.sh")) {
         try {
           await cloudinary.uploader.destroy(key, { invalidate: true });

@@ -29,7 +29,7 @@ export default function Home() {
       <main className="pt-16">
         <LandingHero />
         <TestimonialsSection />
-        {}
+
         <Footer />
       </main>
       <FloatingChatWidget />

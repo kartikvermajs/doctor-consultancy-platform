@@ -27,7 +27,7 @@ interface AuthFormProps {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
-  
+
   const { 
     registerPatient, 
     registerDoctor, 
@@ -40,7 +40,7 @@ interface AuthFormProps {
   const router = useRouter();
 
 
-  
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +97,7 @@ interface AuthFormProps {
       <Card className="border-0 shadow-xl">
         <CardContent className="p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">{title}</h2>
-          
+
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
               {error}
@@ -105,7 +105,7 @@ interface AuthFormProps {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {}
+
             {isSignup && (
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
@@ -120,7 +120,7 @@ interface AuthFormProps {
               </div>
             )}
 
-            {}
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -133,7 +133,7 @@ interface AuthFormProps {
               />
             </div>
 
-            {}
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -161,7 +161,7 @@ interface AuthFormProps {
               </div>
             </div>
 
-            {}
+
             {isSignup && (
               <div className="flex items-start space-x-2">
                 <Checkbox

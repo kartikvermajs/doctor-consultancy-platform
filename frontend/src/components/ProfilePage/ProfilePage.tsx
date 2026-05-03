@@ -883,7 +883,7 @@ const ProfilePage = ({ userType }: ProfileProps) => {
           </div>
         </div>
       </div>
-      
+
       <ImageCropperModal 
         isOpen={isCropperOpen} 
         onClose={() => setIsCropperOpen(false)} 

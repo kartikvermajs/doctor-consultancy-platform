@@ -23,7 +23,7 @@ const page = () => {
   const { bookAppointment, loading, fetchBookedSlots, bookedSlots } =
     useAppointmentStore();
 
-  
+
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedSlot, setSelectedSlot] = useState("");
@@ -49,21 +49,21 @@ const page = () => {
     }
   }, [selectedDate, doctorId, fetchBookedSlots]);
 
-  
+
   useEffect(() => {
     if (currentDoctor?.availabilityRange) {
       const startDate = new Date(currentDoctor?.availabilityRange.startDate);
-      
+
 
       const endDate = new Date(currentDoctor?.availabilityRange.endDate);
-      
+
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
 
       const dates: string[] = [];
-      
+
 
       const iterationStart = new Date(
         Math.max(today.getTime(), startDate.getTime())
@@ -75,27 +75,27 @@ const page = () => {
         d.setDate(d.getDate() + 1)
       ) {
         dates.push(toLocalYMD(d));
-        
+
       }
 
       setAvailableDates(dates);
     }
   }, [currentDoctor]);
 
-  
+
   useEffect(() => {
     if (selectedDate && currentDoctor?.dailyTimeRanges) {
       const slots: string[] = [];
-      
+
 
       const slotDuration = currentDoctor?.slotDurationMinutes || 30;
 
       currentDoctor.dailyTimeRanges.forEach((timeRange:any) => {
         const startMintues = timeToMinutes(timeRange.start);
-        
+
 
         const endMintues = timeToMinutes(timeRange.end);
-        
+
 
         for (
           let mintues = startMintues;
@@ -104,7 +104,7 @@ const page = () => {
         ) {
           slots.push(minutesToTime(mintues));
 
-          
+
         }
       });
 
@@ -149,7 +149,7 @@ const page = () => {
       });
 
 
-      
+
       if(appointment && appointment?._id) {
         setCreatedAppointmentId(appointment._id);
         setPatientName(appointment.patientId.name || 'Patient')
@@ -210,7 +210,7 @@ const page = () => {
               </div>
             </div>
 
-            {}
+
 
             <div className="hidden md:flex items-center space-x-4">
               {[1, 2, 3].map((step) => (
@@ -279,7 +279,7 @@ const page = () => {
                        excludedWeekdays={currentDoctor?.availabilityRange?.excludedWeekdays || []}
                        bookedSlots={bookedSlots}
                        onContinue={() => setCurrentStep(2)}
-                      
+
                       />
                     </motion.div>
                   )}

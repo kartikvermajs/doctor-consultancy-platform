@@ -5,18 +5,18 @@ const { generateEmbedding } = require('./services/aiService');
 mongoose.connect(process.env.MONGO_URI).then(async () => {
   const Appointment = require('./modal/Appointment');
   const appointments = await Appointment.find({ status: "Completed" });
-  
+
   console.log(`Found ${appointments.length} completed appointments.`);
-  
+
   for (const appointment of appointments) {
     if (appointment.embedding && appointment.embedding.length > 0) continue;
-    
+
     const combinedText = `
 Symptoms: ${appointment.symptoms || "None"}
 Diagnosis/Notes: ${appointment.notes || "None"}
 Prescription: ${appointment.prescriptionText || "None"}
     `.trim();
-    
+
     console.log(`Generating embedding for appointment ${appointment._id}...`);
     try {
       const embedding = await generateEmbedding(combinedText);
@@ -29,7 +29,7 @@ Prescription: ${appointment.prescriptionText || "None"}
       console.error(`Failed to generate embedding for ${appointment._id}:`, err.message);
     }
   }
-  
+
   console.log('Backfill complete.');
   process.exit(0);
 }).catch(console.error);

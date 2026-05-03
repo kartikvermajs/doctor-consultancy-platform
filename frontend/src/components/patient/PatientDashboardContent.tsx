@@ -99,14 +99,14 @@ const PatientDashboardContent = () => {
   const [activeTab, setActiveTab] = useState<Tab>("upcoming");
   const [reviewDoctor, setReviewDoctor] = useState<Partial<Doctor> | null>(null);
 
-  
+
   useEffect(() => {
     if (user?.type === "patient") {
       fetchAppointments("patient");
     }
   }, [user, fetchAppointments]);
 
-  
+
   const upcomingAppointments = useMemo(() => {
     const now = new Date();
     return appointments.filter((apt) => {
@@ -128,7 +128,7 @@ const PatientDashboardContent = () => {
     });
   }, [appointments]);
 
-  
+
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("en-US", {
       weekday: "long",
@@ -148,12 +148,12 @@ const PatientDashboardContent = () => {
 
   if (!user) return null;
 
-  
+
   const AppointmentCard = ({ appointment }: { appointment: Appointment }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex gap-4 items-start">
-          {/* Clickable avatar – top-aligned */}
+
           <button
             onClick={() =>
               setReviewDoctor({
@@ -176,9 +176,9 @@ const PatientDashboardContent = () => {
             </Avatar>
           </button>
 
-          {/* Main content */}
+
           <div className="flex-1 min-w-0">
-            {/* Row 1: name + badge */}
+
             <div className="flex items-start justify-between gap-2 flex-wrap">
               <div className="min-w-0">
                 <button
@@ -217,7 +217,7 @@ const PatientDashboardContent = () => {
               </div>
             </div>
 
-            {/* Row 2: date + type */}
+
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-gray-500">
               <div className="flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 shrink-0" />
@@ -233,7 +233,7 @@ const PatientDashboardContent = () => {
               </div>
             </div>
 
-            {/* Row 3: action buttons */}
+
             <div className="flex flex-wrap gap-2 mt-3">
               {canJoinCall(appointment) && (
                 <Link href={`/call/${appointment._id}`}>
@@ -280,7 +280,7 @@ const PatientDashboardContent = () => {
     </Card>
   );
 
-  
+
   const EmptyState = ({ tab }: { tab: Tab }) => {
     const config = {
       upcoming: {
@@ -320,7 +320,7 @@ const PatientDashboardContent = () => {
     );
   };
 
-  
+
   return (
     <>
       <Header showDashboardNav />
@@ -367,7 +367,7 @@ const PatientDashboardContent = () => {
       </div>
       <FloatingChatWidget />
 
-      {/* ── Doctor review modal ── */}
+
       <DoctorReviewModal
         doctor={reviewDoctor as Doctor | null}
         open={!!reviewDoctor}

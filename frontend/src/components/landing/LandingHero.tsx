@@ -49,10 +49,10 @@ const LandingHero = () => {
                          Login as Doctor
                      </Button>
                      </Link>
-                      
+
             </div>
 
-            {/* Healgthcare categories */}
+
             <section className='py-6'>
                  <div className='container mx-auto px-4'>
                  <div className='flex justify-center items-center overflow-x-auto gap-6 pb-2 scrollbar-hide mx-auto'>
@@ -78,7 +78,7 @@ const LandingHero = () => {
                  </div>
             </section>
 
-            {/* Trust Indicator */}
+
             <div className='flex flex-wrap justify-center items-center gap-8 text-sm text-gray-600'>
                 <div className='flex items-center space-x-2'>
                      <div className='w-2 h-2 bg-green-500 rounded-full'>

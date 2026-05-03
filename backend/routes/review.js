@@ -28,13 +28,11 @@ router.post(
       const { appointmentId, rating, comment } = req.body;
       const patientId = req.auth.id;
 
-      
       const appointment = await Appointment.findById(appointmentId);
       if (!appointment) {
         return res.notFound("Appointment not found");
       }
 
-      
       if (appointment.status !== "Completed") {
         return res.status(400).json({
           success: false,
@@ -42,14 +40,12 @@ router.post(
         });
       }
 
-      
       if (appointment.patientId.toString() !== patientId) {
         return res.forbidden(
           "You are not authorised to review this appointment"
         );
       }
 
-      
       const existing = await Review.findOne({ appointmentId });
       if (existing) {
         return res.status(409).json({
@@ -60,7 +56,6 @@ router.post(
         });
       }
 
-      
       const review = await Review.create({
         appointmentId,
         doctorId: appointment.doctorId,
@@ -81,7 +76,7 @@ router.post(
         alreadyReviewed: false,
       });
     } catch (error) {
-      
+
       if (error.code === 11000) {
         return res.status(409).json({
           success: false,

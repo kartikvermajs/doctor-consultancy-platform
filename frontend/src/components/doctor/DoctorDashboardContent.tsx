@@ -436,7 +436,7 @@ const DoctorDashboardContent = () => {
                 </CardContent>
               </Card>
 
-              {/* ── Performance Card — fully dynamic ── */}
+
               <Card className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
@@ -445,7 +445,7 @@ const DoctorDashboardContent = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-5">
-                  {/* Patient Satisfaction — star visual */}
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Patient Satisfaction</span>
@@ -459,7 +459,7 @@ const DoctorDashboardContent = () => {
                         <span className="text-xs text-gray-400">/5</span>
                       </div>
                     </div>
-                    {/* Star bar */}
+
                     <div className="flex gap-0.5">
                       {[1, 2, 3, 4, 5].map((s) => {
                         const val = dashboardData?.performance?.patientSatisfaction ?? 0;
@@ -497,7 +497,7 @@ const DoctorDashboardContent = () => {
                 </CardContent>
               </Card>
 
-              {/* ── Recent Patient Reviews ── */}
+
               {dashboardData?.recentReviews?.length > 0 && (
                 <Card className="hover:shadow-lg transition-shadow">
                   <CardHeader className="flex flex-row items-center justify-between">

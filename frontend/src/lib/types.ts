@@ -41,7 +41,7 @@ export interface User {
   profileImage?: string;
   isVerified:boolean
 
-  
+
   dob?: string;
   gender?: string;
   bloodGroup?: string;
@@ -57,7 +57,7 @@ export interface User {
     relationship?: string;
   };
 
-  
+
   specialization?: string;
   about?: string;
   category?: string[];
@@ -70,7 +70,7 @@ export interface User {
     city?: string;
   };
 
-  
+
   availabilityRange?: {
     startDate?: string;
     endDate?: string;
