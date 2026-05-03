@@ -283,7 +283,7 @@ const FloatingChatWidget = () => {
               display: "flex",
               flexDirection: "column",
               alignItems: "flex-end",
-              gap: "10px",
+              gap: "18px",
               transformOrigin: "bottom right",
             }}
           >
@@ -301,7 +301,7 @@ const FloatingChatWidget = () => {
                   aria-label="Open CuraBot"
                 >
                   <div
-                    className="rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[210px] border border-white/60"
+                    className="rounded-2xl rounded-br-sm px-5 py-2.5 max-w-[250px] border border-white/60"
                     style={{
                       background: "rgba(255,255,255,0.88)",
                       backdropFilter: "blur(12px)",
@@ -321,9 +321,6 @@ const FloatingChatWidget = () => {
                         {PROMPTS[promptIdx]}
                       </motion.p>
                     </AnimatePresence>
-                    <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest mt-1">
-                      CuraBot
-                    </p>
                   </div>
                   {/* Tail */}
                   <div
