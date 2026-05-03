@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Send, Loader2, Bot } from "lucide-react";
+import { X, Send, Loader2, Bot, Maximize2, Minimize2 } from "lucide-react";
 
 // ── Rotating prompts ──────────────────────────────────────────────────────────
 const PROMPTS = [
@@ -43,6 +43,7 @@ const GREETING: ChatMessage = {
 
 const FloatingChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
   const [isLoading, setIsLoading] = useState(false);
@@ -80,7 +81,18 @@ const FloatingChatWidget = () => {
     if (isOpen) setTimeout(() => inputRef.current?.focus(), 300);
   }, [isOpen]);
 
-  const toggleChat = () => setIsOpen((p) => !p);
+  const toggleChat = () => {
+    if (isOpen) {
+      if (isExpanded) {
+        setIsExpanded(false);
+        setTimeout(() => setIsOpen(false), 300);
+      } else {
+        setIsOpen(false);
+      }
+    } else {
+      setIsOpen(true);
+    }
+  };
 
   const sendMessage = async () => {
     const text = message.trim();
@@ -160,23 +172,37 @@ const FloatingChatWidget = () => {
   return (
     <div className="fixed bottom-6 right-6 z-50 w-0 h-0">
 
+      {/* ── Overlay ────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {isOpen && isExpanded && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55]"
+            onClick={() => setIsExpanded(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* ── Chat panel ─────────────────────────────────────────────────────── */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            layout
             initial={{ opacity: 0, scale: 0.92, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 8 }}
             transition={{ type: "spring", damping: 26, stiffness: 320 }}
             style={{
-              position: "absolute",
-              bottom: "72px",
-              right: 0,
-              width: "min(380px, calc(100vw - 3rem))",
-              height: "480px",
               transformOrigin: "bottom right",
             }}
-            className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col pointer-events-auto"
+            className={`bg-white overflow-hidden border border-gray-100 flex flex-col pointer-events-auto ${
+              isExpanded
+                ? "fixed z-[60] inset-0 md:m-auto md:w-[500px] md:h-[80vh] w-full h-full rounded-none md:rounded-2xl shadow-2xl"
+                : "absolute z-[60] bottom-[72px] right-0 w-[min(380px,calc(100vw-3rem))] h-[480px] rounded-2xl shadow-2xl"
+            }`}
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-green-600 to-green-700 px-4 py-3.5 flex justify-between items-center text-white shrink-0">
@@ -189,13 +215,22 @@ const FloatingChatWidget = () => {
                   <p className="text-[11px] text-white/75 leading-tight">Powered by your medical history</p>
                 </div>
               </div>
-              <button
-                onClick={toggleChat}
-                className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
-                aria-label="Close Chat"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
+                  aria-label={isExpanded ? "Minimize Chat" : "Maximize Chat"}
+                >
+                  {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={toggleChat}
+                  className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
+                  aria-label="Close Chat"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Messages */}
