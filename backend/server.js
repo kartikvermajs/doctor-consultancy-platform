@@ -18,15 +18,14 @@ app.use(helmet());
 
 
 app.use(morgan("dev"));
+const allowedOriginsStr = process.env.ALLOWED_ORIGINS || "";
+const allowedOrigins = allowedOriginsStr.split(",").map(s => s.trim()).filter(Boolean);
+
 app.use(
   cors({
-    origin:
-      (process.env.ALLOWED_ORIGINS || "")
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean) || "*",
+    origin: allowedOrigins.length > 0 ? allowedOrigins : "*",
     credentials: true,
-  }),
+  })
 );
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -39,10 +38,7 @@ app.use(passportLib.initialize());
 
 
 mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
@@ -74,4 +70,4 @@ app.get("/api/cloudinary-health", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
+app.listen(PORT, "0.0.0.0", () => console.log(`Server listening on ${PORT}`));
