@@ -229,14 +229,7 @@ const FloatingChatWidget = () => {
                   className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
                   aria-label={isExpanded ? "Minimize Chat" : "Maximize Chat"}
                 >
-                  {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                </button>
-                <button
-                  onClick={toggleChat}
-                  className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
-                  aria-label="Close Chat"
-                >
-                  <X className="w-4 h-4" />
+                  {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="cursor-pointer w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -378,8 +371,6 @@ const FloatingChatWidget = () => {
               aria-label="Open CuraBot chat"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              animate={{ y: [0, -6, 0] }}
-              transition={{ repeat: Infinity, duration: 3.2, ease: "easeInOut" }}
               className="relative flex items-center justify-center cursor-pointer"
             >
 
