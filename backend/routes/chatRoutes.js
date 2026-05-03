@@ -18,6 +18,10 @@ router.post(
       .trim()
       .notEmpty()
       .withMessage("message is required"),
+    body("history")
+      .optional()
+      .isArray()
+      .withMessage("history must be an array"),
   ],
   validate,
   handleChatMessage

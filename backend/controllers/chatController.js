@@ -2,7 +2,7 @@ const { buildPatientContext, buildDoctorContext } = require("../services/context
 const { generateReplyStream } = require("../services/aiService");
 
 const handleChatMessage = async (req, res) => {
-  const { message } = req.body;
+  const { message, history = [] } = req.body;
 
   if (!message || typeof message !== "string" || !message.trim()) {
     return res.status(400).json({ success: false, message: "message is required and must be a non-empty string" });
@@ -26,7 +26,10 @@ const handleChatMessage = async (req, res) => {
       context = await buildPatientContext(userId);
     }
 
-    await generateReplyStream(context, message.trim(), userName, res);
+    // Pass history for multi-turn conversational context (exclude the current message — it's passed separately)
+    const historyWithoutCurrent = Array.isArray(history) ? history.slice(0, -1) : [];
+
+    await generateReplyStream(context, message.trim(), userName, res, historyWithoutCurrent);
   } catch (error) {
     console.error("[chatController] Error:", error);
     res.write("I'm having trouble connecting to the AI service right now. Please try again in a moment.");

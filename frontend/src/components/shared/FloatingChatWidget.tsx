@@ -82,7 +82,11 @@ const FloatingChatWidget = () => {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({
+          message: text,
+          // Send full conversation history so AI can maintain multi-turn context
+          history: messages.map((m) => ({ role: m.role, text: m.text })),
+        }),
       });
 
       if (!response.ok || !response.body) {
@@ -153,9 +157,9 @@ const FloatingChatWidget = () => {
             style={{ height: "480px" }}
           >
             {}
-            <div className="bg-primary px-4 py-3.5 flex justify-between items-center text-white shrink-0">
+            <div className="bg-gradient-to-r from-green-600 to-green-700 px-4 py-3.5 flex justify-between items-center text-white shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shadow-sm">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
                 <div>
@@ -177,7 +181,7 @@ const FloatingChatWidget = () => {
             </div>
 
             {}
-            <div className="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col gap-3">
+            <div className="flex-1 p-4 overflow-y-auto bg-green-50/50 flex flex-col gap-3">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
@@ -188,7 +192,7 @@ const FloatingChatWidget = () => {
                   <div
                     className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
                       msg.role === "user"
-                        ? "bg-primary text-white rounded-br-sm"
+                        ? "bg-green-600 text-white rounded-br-sm shadow-sm"
                         : "bg-white text-gray-700 border border-gray-100 shadow-sm rounded-bl-sm"
                     }`}
                   >
@@ -225,7 +229,7 @@ const FloatingChatWidget = () => {
 
             {}
             <div className="p-3 bg-white border-t border-gray-100 shrink-0">
-              <div className="flex items-center bg-gray-50 rounded-full border border-gray-200 px-3 py-2 pr-1 focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
+              <div className="flex items-center bg-gray-50 rounded-full border border-gray-200 px-3 py-2 pr-1 focus-within:ring-1 focus-within:ring-green-600 focus-within:border-green-600 transition-all">
                 <input
                   ref={inputRef}
                   type="text"
@@ -239,7 +243,7 @@ const FloatingChatWidget = () => {
                 <button
                   className={`p-2 rounded-full flex items-center justify-center transition-colors ${
                     message.trim() && !isLoading
-                      ? "bg-primary text-white"
+                      ? "bg-green-600 text-white shadow-sm hover:bg-green-700"
                       : "bg-gray-200 text-gray-400"
                   }`}
                   disabled={!message.trim() || isLoading}
@@ -265,7 +269,7 @@ const FloatingChatWidget = () => {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={toggleChat}
-        className="w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center relative pointer-events-auto"
+        className="w-14 h-14 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-full shadow-xl flex items-center justify-center relative pointer-events-auto hover:from-green-700 hover:to-green-800 transition-colors"
         aria-label={isOpen ? "Close chat" : "Open chat"}
       >
         <AnimatePresence mode="wait">
