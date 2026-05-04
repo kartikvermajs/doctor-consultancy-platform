@@ -117,10 +117,6 @@ router.post(
   [body("appointmentId").isMongoId()],
   validate,
   async (req, res) => {
-    if (process.env.NODE_ENV === "production") {
-      return res.forbidden("Simulation not available in production");
-    }
-
     try {
       const { appointmentId } = req.body;
 

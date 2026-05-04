@@ -38,7 +38,6 @@ interface PaymentStepInterface {
   patientName?: string;
 }
 
-const IS_DEV = process.env.NODE_ENV !== "production";
 
 const PayementStep = ({
   selectedDate,
@@ -236,8 +235,7 @@ const PayementStep = ({
 
       {paymentStatus === "idle" && (
         <div className="space-y-5">
-          {IS_DEV && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm space-y-3">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm space-y-3">
               <p className="font-semibold text-amber-800 flex items-center gap-2">
                 <FlaskConical className="w-4 h-4" />
                 Test Mode — No Real Money
@@ -293,7 +291,6 @@ const PayementStep = ({
                 </ul>
               </div>
             </div>
-          )}
 
           <div className="flex justify-between">
             <Button variant="outline" onClick={onBack}>
